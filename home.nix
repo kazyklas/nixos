@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, pkgs, lib, ... }:
 
 {
 
@@ -118,10 +118,15 @@
       recursive = true;
       force = true;
     };
-    "hypr/noctalia" = {
-      source = ./hypr/noctalia;
-      recursive = true;
-      force = true;
-    };
   };
+
+  home.activation.installNoctaliaColors = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    noctalia_dir="$HOME/.config/hypr/noctalia"
+    if [ ! -d "$noctalia_dir" ]; then
+      mkdir -p "$noctalia_dir"
+    fi
+    if [ ! -f "$noctalia_dir/noctalia-colors.conf" ]; then
+      cp ${./hypr/noctalia/noctalia-colors.conf} "$noctalia_dir/noctalia-colors.conf"
+    fi
+  '';
 }

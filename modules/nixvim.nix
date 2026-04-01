@@ -44,7 +44,7 @@
       }
       {
         mode = "n";
-        key = "<leader>sf";
+        key = "<leader>sg";
         action = "<cmd>Telescope live_grep<CR>";
       }
       {

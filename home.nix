@@ -1,10 +1,9 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, ... }:
 
 {
 
   imports = [
     ./modules/nixvim.nix
-    ./modules/hyprland.nix
   ];
 
   home.username = "tklas";
@@ -111,22 +110,4 @@
   };
 
   programs.kitty.enable = true;
-
-  xdg.configFile = {
-    "hypr/colors.conf" = {
-      source = ./hypr/colors.conf;
-      recursive = true;
-      force = true;
-    };
-  };
-
-  home.activation.installNoctaliaColors = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    noctalia_dir="$HOME/.config/hypr/noctalia"
-    if [ ! -d "$noctalia_dir" ]; then
-      mkdir -p "$noctalia_dir"
-    fi
-    if [ ! -f "$noctalia_dir/noctalia-colors.conf" ]; then
-      cp ${./hypr/noctalia/noctalia-colors.conf} "$noctalia_dir/noctalia-colors.conf"
-    fi
-  '';
 }

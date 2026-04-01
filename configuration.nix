@@ -60,6 +60,11 @@
     pulse.enable = true;
   };
 
+  programs.hyprland = {
+	  enable = true;
+	  xwayland.enable = true;
+  };
+
   programs.zsh.enable = true;
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
@@ -132,8 +137,6 @@
   # Enable the GNOME Desktop Environment.
   services.displayManager.gdm.enable = true;
   services.desktopManager.gnome.enable = true;
-  # Register Hyprland session for GDM
-  services.xserver.displayManager.sessionPackages = [ pkgs.hyprland ];
   # Configure keymap in X11
   services.xserver.xkb = {
     layout = "us, cz";

@@ -85,7 +85,7 @@
       {
         mode = "n";
         key = "<leader>t";
-        action = "<cmd>split | terminal<CR>";
+        action = "<cmd>set splitbelow | <cmd>split | terminal<CR>";
       }
     ];
 

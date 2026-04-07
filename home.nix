@@ -28,6 +28,7 @@
     libnotify
     swaynotificationcenter
     quickshell
+    hyprcursor
 
     # tools
     git
@@ -49,6 +50,7 @@
     ripgrep
     kubernetes-helm
     k9s
+    ffmpeg
 
     # dev
     lens
@@ -67,6 +69,8 @@
     moonlight-qt
     opencode
     obsidian
+    vlc
+    claude-code
   ];
 
   programs.git = {

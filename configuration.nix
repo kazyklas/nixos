@@ -109,7 +109,12 @@
   programs.appimage.enable = true;
   hardware.graphics.enable = true;
   hardware.graphics.enable32Bit = true;
+ 
+  # enable uv to run
+  programs.nix-ld.enable = true;
 
+
+  environment.localBinInPath = true;
 
   virtualisation = {
     containers.enable = true;
@@ -143,14 +148,13 @@
     variant = "";
   };
 
-  # services.tlp = {
-  #   enable = true;
-  #   settings = {
-  #     # Battery charging threshold (e.g., 40-80%)
-  #     START_CHARGE_THRESH_BAT0 = 40; 
-  #     STOP_CHARGE_THRESH_BAT0 = 80;
-  #   };
-  # };
+  #services.tlp = {
+  #  enable = true;
+  #  settings = {
+  #    # Battery charging threshold 80%
+  #    STOP_CHARGE_THRESH_BAT0 = 80;
+  #  };
+  #};
 
   system.stateVersion = "25.11";
 

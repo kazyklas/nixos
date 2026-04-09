@@ -34,6 +34,11 @@
       tabstop = 2;
       expandtab = true;
       smartindent = true;
+      colorcolumn = "80";
+    };
+
+    highlight.ColorColumn = {
+      bg = "#010101";
     };
 
     keymaps = [
@@ -85,12 +90,19 @@
       {
         mode = "n";
         key = "<leader>t";
-        action = "<cmd>set splitbelow | <cmd>split | terminal<CR>";
+        action = "<cmd>set splitbelow | split | terminal<CR>";
+      }
+      {
+        mode = "n";
+        key = "<leader>gg";
+        action = "<cmd>LazyGit<CR>";
       }
     ];
 
     plugins = {
       web-devicons.enable = true;
+
+      lazygit.enable = true;
 
       lualine.enable = true;
       treesitter = {
@@ -107,8 +119,8 @@
         enable = true;
         servers = {
           lua_ls = { enable = true; };
-          python_ls = { enable = true; };
-          bash_ls = { enable = true; };
+          pylsp = { enable = true; };
+          bashls = { enable = true; };
           nixd = { enable = true; };
           dockerls = { enable = true; };
           terraformls = { enable = true; };

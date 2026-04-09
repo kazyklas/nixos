@@ -51,6 +51,9 @@
     kubernetes-helm
     k9s
     ffmpeg
+    bat
+    jiratui
+    jira-cli-go
 
     # dev
     lens
@@ -96,6 +99,10 @@
     history.size = 100000;
     history.ignoreAllDups = true;
     history.path = "$HOME/.zsh_history";
+
+    shellAliases = {
+      bat = "bat --color=auto --decorations=auto";
+    };
 
     initContent = ''
       source ${pkgs.zsh-autosuggestions}/share/zsh-autosuggestions/zsh-autosuggestions.zsh

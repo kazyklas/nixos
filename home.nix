@@ -54,6 +54,8 @@
     bat
     jiratui
     jira-cli-go
+    eza
+    g-ls
 
     # dev
     lens

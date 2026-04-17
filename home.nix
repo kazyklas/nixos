@@ -56,6 +56,8 @@
     jira-cli-go
     eza
     g-ls
+    kubeseal
+    openssl
 
     # dev
     lens
@@ -104,6 +106,9 @@
 
     shellAliases = {
       bat = "bat --color=auto --decorations=auto";
+      g = "g";
+      ll = "g --tb-style=unicode --all --color always --header --git-repo-status";
+      ls = "g --tb-style=unicode";
     };
 
     initContent = ''

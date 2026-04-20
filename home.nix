@@ -27,7 +27,6 @@
     rofi
     libnotify
     swaynotificationcenter
-    quickshell
     hyprcursor
 
     # tools
@@ -128,4 +127,13 @@
   };
 
   programs.kitty.enable = true;
+
+  programs.caelestia = {
+    enable = true;
+    systemd.enable = false;
+    cli.enable = true;
+    settings = {
+      paths.wallpaperDir = "~/Pictures/Wallpaper";
+    };
+  };
 }

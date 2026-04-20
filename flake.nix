@@ -19,6 +19,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    caelestia-shell = {
+      url = "github:caelestia-dots/shell";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
   };
 
   nixConfig = {
@@ -28,7 +33,7 @@
     ];
   };
 
-  outputs = inputs@{ self, nixpkgs, home-manager, nixvim, ... }: {
+  outputs = inputs@{ self, nixpkgs, home-manager, nixvim, caelestia-shell, ... }: {
     nixosConfigurations.nixos = nixpkgs.lib.nixosSystem {
       specialArgs = { inherit inputs; };
       modules = [
@@ -45,6 +50,7 @@
             imports = [
               ./home.nix
               nixvim.homeModules.nixvim
+              caelestia-shell.homeManagerModules.default
             ];
           };
         }

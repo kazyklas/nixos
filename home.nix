@@ -30,6 +30,7 @@
     hyprcursor
 
     # tools
+    unrar
     git
     jq
     yq
@@ -71,12 +72,13 @@
     spotify
     obs-studio
     whatsapp-electron
-    ani-cli
     moonlight-qt
     opencode
     obsidian
     vlc
     claude-code
+    ani-cli
+    openvpn
   ];
 
   programs.git = {

@@ -135,6 +135,24 @@
   services.openssh.enable = true;
   services.tailscale.enable = true;
   services.power-profiles-daemon.enable = true;
+
+  # Auto-switch power profile based on AC adapter state
+  systemd.services.power-profile-ac = {
+    description = "Set performance profile on AC power";
+    script = "${pkgs.power-profiles-daemon}/bin/powerprofilesctl set performance";
+    serviceConfig.Type = "oneshot";
+  };
+
+  systemd.services.power-profile-battery = {
+    description = "Set power-saver profile on battery";
+    script = "${pkgs.power-profiles-daemon}/bin/powerprofilesctl set power-saver";
+    serviceConfig.Type = "oneshot";
+  };
+
+  services.udev.extraRules = ''
+    SUBSYSTEM=="power_supply", ATTR{online}=="1", TAG+="systemd", ENV{SYSTEMD_WANTS}="power-profile-ac.service"
+    SUBSYSTEM=="power_supply", ATTR{online}=="0", TAG+="systemd", ENV{SYSTEMD_WANTS}="power-profile-battery.service"
+  '';
   services.upower.enable = true;
   services.printing.enable = true;
   services.logind.settings.Login = {

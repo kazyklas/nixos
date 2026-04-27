@@ -79,6 +79,7 @@
     claude-code
     ani-cli
     openvpn
+    transmission_4
   ];
 
   programs.git = {
@@ -136,6 +137,9 @@
     cli.enable = true;
     settings = {
       paths.wallpaperDir = "~/Pictures/Wallpaper";
+      bar = {
+        persistent = false;
+      };
     };
   };
 }

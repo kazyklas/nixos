@@ -21,9 +21,11 @@
 
   # Use latest kernel.
   boot.kernelPackages = pkgs.linuxPackages_latest;
+  boot.kernelParams = [ "mem_sleep_default=deep" ];
 
   # Enable networking
   networking.networkmanager.enable = true;
+  networking.networkmanager.wifi.powersave = false;
   networking.hostName = "nixos"; # Define your hostname.
 
   # Set your time zone.

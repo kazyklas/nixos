@@ -32,6 +32,7 @@
     # tools
     unrar
     git
+    tree
     jq
     yq
     zip
@@ -64,6 +65,7 @@
     kubectl
     opentofu
     zed-editor
+    databricks-cli
 
     # apps
     _1password-gui

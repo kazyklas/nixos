@@ -120,10 +120,24 @@
         servers = {
           lua_ls = { enable = true; };
           pylsp = { enable = true; };
+          ruff = { enable = true; };
           bashls = { enable = true; };
           nixd = { enable = true; };
           dockerls = { enable = true; };
           terraformls = { enable = true; };
+        };
+      };
+
+      conform-nvim = {
+        enable = true;
+        settings = {
+          formatters_by_ft = {
+            python = [ "ruff_format" ];
+          };
+          format_on_save = {
+            timeout_ms = 500;
+            lsp_fallback = true;
+          };
         };
       };
 

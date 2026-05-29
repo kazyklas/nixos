@@ -59,6 +59,7 @@
     g-ls
     kubeseal
     openssl
+    bc
 
     # dev
     lens

@@ -20,7 +20,7 @@
     zsh-syntax-highlighting
 
     # hyprland ecosystem
-    swww
+    awww
     waybar
     hyprlock
     hyprshot
@@ -75,7 +75,7 @@
     pre-commit
     terraform-docs
     tflint
-    checkov
+    # checkov  # temporarily disabled: pycep-parser version mismatch in nixpkgs
 
 
     # apps
@@ -94,6 +94,7 @@
     openvpn
     transmission_4
     teams-for-linux
+    beekeeper-studio
   ];
 
   programs.git = {

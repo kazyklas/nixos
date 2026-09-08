@@ -1,6 +1,10 @@
 { config, pkgs, inputs, ... }:
 
 {
+  nixpkgs.config.permittedInsecurePackages = [
+    "python3.14-ecdsa-0.19.2"
+  ];
+
   environment.sessionVariables = {
 	  NIXOS_OZONE_WL = "1";
 	  MOZ_ENABLE_WAYLAND = "1";

@@ -30,6 +30,7 @@
     hyprcursor
 
     # tools
+    shell-gpt
     unrar
     git
     tree
@@ -95,6 +96,7 @@
     transmission_4
     teams-for-linux
     beekeeper-studio
+    gimp2
   ];
 
   programs.git = {

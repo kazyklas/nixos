@@ -177,6 +177,9 @@
     variant = "";
   };
 
+  virtualisation.libvirtd.enable = true;
+  programs.virt-manager.enable = true;
+
   #services.tlp = {
   #  enable = true;
   #  settings = {

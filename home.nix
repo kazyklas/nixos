@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, pkgs, inputs, ... }:
 
 {
 
@@ -72,6 +72,7 @@
     kubectl
     opentofu
     zed-editor
+    vscode
     databricks-cli
     pre-commit
     terraform-docs
@@ -88,8 +89,10 @@
     whatsapp-electron
     moonlight-qt
     opencode
+    opencode-desktop
     obsidian
     vlc
+    inputs.bookokrat.packages.${pkgs.stdenv.hostPlatform.system}.default
     claude-code
     ani-cli
     openvpn

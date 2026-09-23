@@ -24,6 +24,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    bookokrat = {
+      url = "github:bugzmanov/bookokrat";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
   };
 
   nixConfig = {
@@ -46,6 +51,7 @@
         {
           home-manager.useGlobalPkgs = true;
           home-manager.useUserPackages = true;
+          home-manager.extraSpecialArgs = { inherit inputs; };
           home-manager.users.tklas = {
             imports = [
               ./home.nix

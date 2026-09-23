@@ -3,6 +3,7 @@
 {
   nixpkgs.config.permittedInsecurePackages = [
     "python3.14-ecdsa-0.19.2"
+    "beekeeper-studio-6.0.5"
   ];
 
   environment.sessionVariables = {

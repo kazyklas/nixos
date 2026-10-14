@@ -29,6 +29,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Pins its own nixpkgs on purpose: spicetify-cli must match the Spotify
+    # version it patches, so don't make this follow ours.
+    spicetify-nix.url = "github:Gerg-L/spicetify-nix";
+
   };
 
   nixConfig = {
@@ -57,6 +61,7 @@
               ./home.nix
               nixvim.homeModules.nixvim
               caelestia-shell.homeManagerModules.default
+              inputs.spicetify-nix.homeManagerModules.spicetify
             ];
           };
         }

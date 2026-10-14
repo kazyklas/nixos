@@ -71,6 +71,7 @@
     # dev
     lens
     kubectl
+    argocd
     opentofu
     zed-editor
     vscode
@@ -87,7 +88,7 @@
     _1password-gui
     google-chrome
     keepassxc
-    spotify
+    # spotify: installed by programs.spicetify below (patched build)
     obs-studio
     whatsapp-electron
     moonlight-qt
@@ -156,6 +157,43 @@
   };
 
   programs.kitty.enable = true;
+
+  # Spicetify-patched Spotify. The "text" theme is a port of the spotify-tui
+  # look; its knobs are CSS variables in user.css, which additionalCss appends
+  # to (so a later :root block wins the cascade without !important).
+  programs.spicetify =
+    let
+      spicePkgs = inputs.spicetify-nix.legacyPackages.${pkgs.stdenv.hostPlatform.system};
+    in
+    {
+      enable = true;
+      theme = spicePkgs.themes.text // {
+        additionalCss = ''
+          :root {
+            /* The nerd-fonts variant registers under its own family name, so
+               ask for it first and keep the upstream name as a fallback. */
+            --font-family: "JetBrainsMono Nerd Font", "JetBrains Mono", monospace;
+            --border-radius: 0px;
+            --display-coverart-image: none;
+            --display-music-banner-ascii: block;
+          }
+        '';
+      };
+      colorScheme = "TokyoNight";
+
+      enabledExtensions = with spicePkgs.extensions; [
+        adblockify
+        hidePodcasts
+        shuffle
+        fullAppDisplayMod
+        volumePercentage
+      ];
+
+      enabledCustomApps = with spicePkgs.apps; [
+        marketplace
+        lyricsPlus
+      ];
+    };
 
   programs.caelestia = {
     enable = true;

@@ -6,6 +6,7 @@
     ./modules/nixvim.nix
     ./modules/hyprland.nix
     ./modules/noctalia-claude-chat.nix
+    ./modules/claude-code.nix
   ];
 
   home.username = "tklas";
@@ -100,7 +101,7 @@
     obsidian
     vlc
     inputs.bookokrat.packages.${pkgs.stdenv.hostPlatform.system}.default
-    claude-code
+    # claude-code: installed by programs.claude-code (modules/claude-code.nix)
     gemini-cli
     ani-cli
     openvpn

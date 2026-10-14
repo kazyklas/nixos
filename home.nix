@@ -4,6 +4,7 @@
 
   imports = [
     ./modules/nixvim.nix
+    ./modules/hyprland.nix
   ];
 
   home.username = "tklas";
@@ -77,7 +78,9 @@
     pre-commit
     terraform-docs
     tflint
-    # checkov  # temporarily disabled: pycep-parser version mismatch in nixpkgs
+    jdk17
+    (maven.override { jdk_headless = jdk17_headless; })
+    checkov
 
 
     # apps
@@ -88,12 +91,15 @@
     obs-studio
     whatsapp-electron
     moonlight-qt
-    opencode
+    # nixpkgs' source build of opencode 1.18.30 is broken (every prompt fails with
+    # "Failed to send prompt"); use the upstream prebuilt binary instead.
+    (pkgs.callPackage ./pkgs/opencode-bin.nix { })
     opencode-desktop
     obsidian
     vlc
     inputs.bookokrat.packages.${pkgs.stdenv.hostPlatform.system}.default
     claude-code
+    gemini-cli
     ani-cli
     openvpn
     transmission_4

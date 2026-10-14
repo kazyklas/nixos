@@ -55,6 +55,18 @@
     nerd-fonts.fira-code
     nerd-fonts.jetbrains-mono
     nerd-fonts.hack
+
+    # General-purpose coverage. Without these, scripts like Thai, Devanagari,
+    # Arabic, Hebrew and Georgian resolve only to the Unifont bitmap fallback,
+    # which renders as tofu/blocky glyphs -- most visibly in Steam, whose
+    # bundled fontconfig is too old to parse 10-scale-bitmap-fonts.conf and so
+    # cannot scale bitmap fonts at all. programs.steam.fontPackages defaults to
+    # config.fonts.packages, so adding them here covers Steam too.
+    noto-fonts
+    noto-fonts-cjk-sans
+    noto-fonts-cjk-serif
+    noto-fonts-color-emoji
+    liberation_ttf
   ];
 
   # Enable sound with pipewire.

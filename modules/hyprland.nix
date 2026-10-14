@@ -401,6 +401,7 @@ in
         (bind "${mainMod} + space" (exec "noctalia msg panel-toggle launcher"))
         (bind "${mainMod} + CTRL + L" (exec "noctalia msg session lock"))
         (bind "${mainMod} + W" (exec "noctalia ipc call wallpaper toggle"))
+        (bind "${mainMod} + A" (exec "noctalia msg panel-toggle tklas/claude_chat:chat"))
         (bind "${mainMod} + CTRL + R" (exec "hyprctl reload"))
 
         # monitor profiles: SHIFT+M opens the rofi picker, the rest jump

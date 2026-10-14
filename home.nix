@@ -5,6 +5,7 @@
   imports = [
     ./modules/nixvim.nix
     ./modules/hyprland.nix
+    ./modules/noctalia-claude-chat.nix
   ];
 
   home.username = "tklas";

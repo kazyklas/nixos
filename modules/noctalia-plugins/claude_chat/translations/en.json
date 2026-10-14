@@ -1,0 +1,23 @@
+{
+  "settings.model.label": "Model",
+  "settings.model.description": "Which Claude model answers. 'Account default' uses whatever your Claude Code login is set to.",
+  "settings.model.option.default": "Account default",
+  "settings.model.option.opus": "Opus",
+  "settings.model.option.sonnet": "Sonnet",
+  "settings.model.option.haiku": "Haiku",
+
+  "settings.tools.label": "Capabilities",
+  "settings.tools.description": "Chat only runs with no tools at all. Read-only adds Read/Glob/Grep/WebSearch. Agent removes every permission prompt, so Claude can edit files and run commands in the working directory without asking.",
+  "settings.tools.option.chat": "Chat only (no tools)",
+  "settings.tools.option.read_only": "Read-only tools",
+  "settings.tools.option.agent": "Agent (skips all permission prompts)",
+
+  "settings.workdir.label": "Working directory",
+  "settings.workdir.description": "Directory the claude process runs in. It decides which project context and CLAUDE.md apply outside chat-only mode.",
+
+  "settings.system_prompt.label": "Extra system prompt",
+  "settings.system_prompt.description": "Appended to Claude's system prompt on every turn. Leave empty for the default behaviour.",
+
+  "settings.claude_bin.label": "claude executable",
+  "settings.claude_bin.description": "Command used to launch Claude Code. An absolute path works if it is not on Noctalia's PATH."
+}

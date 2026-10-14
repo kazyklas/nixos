@@ -1,0 +1,74 @@
+id           = "tklas/claude_chat"
+name         = "Claude Chat"
+version      = "1.0.0"
+plugin_api   = 21
+author       = "tklas"
+license      = "MIT"
+icon         = "sparkles"
+description  = "Chat with Claude in a Noctalia panel, streamed from the Claude Code CLI."
+tags         = ["ai", "chat", "claude"]
+dependencies = ["claude-code"]
+
+# Shared by the panel and the bar widget; edited under Settings -> Plugins.
+[[setting]]
+key       = "model"
+type      = "select"
+label_key = "settings.model.label"
+description_key = "settings.model.description"
+default   = "default"
+options = [
+  { value = "default", label_key = "settings.model.option.default" },
+  { value = "opus",    label_key = "settings.model.option.opus" },
+  { value = "sonnet",  label_key = "settings.model.option.sonnet" },
+  { value = "haiku",   label_key = "settings.model.option.haiku" },
+]
+
+[[setting]]
+key       = "tools"
+type      = "select"
+label_key = "settings.tools.label"
+description_key = "settings.tools.description"
+default   = "chat"
+options = [
+  { value = "chat",      label_key = "settings.tools.option.chat" },
+  { value = "read_only", label_key = "settings.tools.option.read_only" },
+  { value = "agent",     label_key = "settings.tools.option.agent" },
+]
+
+[[setting]]
+key       = "workdir"
+type      = "folder"
+label_key = "settings.workdir.label"
+description_key = "settings.workdir.description"
+default   = "~"
+
+[[setting]]
+key       = "system_prompt"
+type      = "string"
+label_key = "settings.system_prompt.label"
+description_key = "settings.system_prompt.description"
+default   = ""
+
+[[setting]]
+key       = "claude_bin"
+type      = "string"
+label_key = "settings.claude_bin.label"
+description_key = "settings.claude_bin.description"
+default   = "claude"
+advanced  = true
+
+[[panel]]
+id       = "chat"
+entry    = "panel.luau"
+width    = 620
+height   = 700
+placement = "floating"
+position = "center"
+# A misclick should never throw away a conversation; Escape still closes.
+dismiss_on_outside_click = false
+# Focus the composer as soon as the panel opens.
+keyboard_focus = "exclusive"
+
+[[widget]]
+id    = "toggle"
+entry = "widget.luau"

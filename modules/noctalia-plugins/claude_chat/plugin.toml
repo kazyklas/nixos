@@ -1,11 +1,11 @@
 id           = "tklas/claude_chat"
 name         = "Claude Chat"
-version      = "1.0.0"
-plugin_api   = 21
+version      = "1.1.0"
+plugin_api   = 28
 author       = "tklas"
 license      = "MIT"
 icon         = "sparkles"
-description  = "Chat with Claude in a Noctalia panel, streamed from the Claude Code CLI."
+description  = "Chat with Claude in a Noctalia panel, with multiple conversations, streamed from the Claude Code CLI."
 tags         = ["ai", "chat", "claude"]
 dependencies = ["claude-code"]
 
@@ -60,8 +60,8 @@ advanced  = true
 [[panel]]
 id       = "chat"
 entry    = "panel.luau"
-width    = 620
-height   = 700
+width    = 820
+height   = 720
 placement = "floating"
 position = "center"
 # A misclick should never throw away a conversation; Escape still closes.

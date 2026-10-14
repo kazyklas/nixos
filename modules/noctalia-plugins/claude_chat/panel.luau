@@ -3,25 +3,40 @@
 -- Each turn writes the prompt to a file and streams
 --   cat prompt | claude -p --output-format stream-json --include-partial-messages
 -- through noctalia.runStream, appending text deltas to the open assistant
--- bubble. The session id from the CLI is reused with --resume, so the
--- conversation continues across turns (and across shell restarts, since the
--- transcript and session id are persisted in the plugin data dir).
+-- bubble.
+--
+-- Conversations are first class: the panel keeps a list of them in a sidebar,
+-- each with its own Claude Code session id. Switching conversations switches
+-- which session the next turn resumes, so several independent threads stay
+-- alive side by side. Everything is persisted to the plugin data dir, so the
+-- list survives a shell restart.
 
-local MAX_KEPT = 60 -- transcript entries kept in memory and on disk
+local MAX_CONVERSATIONS = 40 -- oldest conversations beyond this are dropped
+local MAX_KEPT = 60 -- transcript entries kept per conversation
+local MAX_TITLE = 28 -- characters shown in the sidebar
 local RENDER_INTERVAL_MS = 60 -- floor between re-renders while streaming
 local STALL_MS = 180000 -- no output at all for this long = give up
+local SIDEBAR_WIDTH = 190
 
-local messages = {} -- { id, role = "user"|"assistant", text, failed, streaming }
-local nextId = 1
-local sessionId = nil
+-- conversation: { id, title, session, updated, messages = { { id, role, text, failed, streaming } } }
+local conversations = {}
+local activeId = nil
+local nextConvId = 1
+local nextMessageId = 1
+
 local current = nil -- the assistant entry being streamed into
+local runConvId = nil -- conversation that turn belongs to
 local busy = false
 local runSeq = 0
 local activeRun = 0
 local status = nil -- one short line above the composer
+
 local draft = ""
 local composerRev = 1
 local scrollRev = 0
+local sidebarOpen = true
+local renamingId = nil
+
 local lastRenderMs = 0
 local lastActivityMs = 0
 local renderPending = false
@@ -60,80 +75,229 @@ local function publishBusy()
   noctalia.state.set("busy", busy)
 end
 
+local function firstLine(text)
+  local collapsed = string.gsub(text, "%s+", " ")
+  return noctalia.string.trim(collapsed)
+end
+
+local function truncate(text, limit)
+  if utf8.len(text) == nil then
+    -- Not valid UTF-8 (should not happen) -- fall back to bytes.
+    if #text <= limit then
+      return text
+    end
+    return string.sub(text, 1, limit) .. "..."
+  end
+  if utf8.len(text) <= limit then
+    return text
+  end
+  return string.sub(text, 1, utf8.offset(text, limit) - 1) .. "..."
+end
+
+local function relativeTime(timestamp)
+  if type(timestamp) ~= "number" then
+    return ""
+  end
+  local delta = os.time() - timestamp
+  if delta < 60 then
+    return "just now"
+  elseif delta < 3600 then
+    return string.format("%dm ago", math.floor(delta / 60))
+  elseif delta < 86400 then
+    return string.format("%dh ago", math.floor(delta / 3600))
+  elseif delta < 604800 then
+    return string.format("%dd ago", math.floor(delta / 86400))
+  end
+  return noctalia.formatTime("{:%b %d}", timestamp)
+end
+
+--==========================================================================
+-- Conversations
+--==========================================================================
+
+local function conversationById(id)
+  for _, conversation in ipairs(conversations) do
+    if conversation.id == id then
+      return conversation
+    end
+  end
+  return nil
+end
+
+local function active()
+  return conversationById(activeId)
+end
+
+local function titleOf(conversation)
+  if conversation.title ~= nil and conversation.title ~= "" then
+    return conversation.title
+  end
+  for _, message in ipairs(conversation.messages) do
+    if message.role == "user" and message.text ~= "" then
+      return truncate(firstLine(message.text), MAX_TITLE)
+    end
+  end
+  return "New chat"
+end
+
+local function sortConversations()
+  table.sort(conversations, function(a, b)
+    return (a.updated or 0) > (b.updated or 0)
+  end)
+end
+
+local function createConversation()
+  local conversation = {
+    id = "c" .. tostring(nextConvId),
+    title = nil,
+    session = nil,
+    updated = os.time(),
+    messages = {},
+  }
+  nextConvId = nextConvId + 1
+  table.insert(conversations, 1, conversation)
+  while #conversations > MAX_CONVERSATIONS do
+    table.remove(conversations)
+  end
+  activeId = conversation.id
+  return conversation
+end
+
+local function ensureActive()
+  local conversation = active()
+  if conversation == nil then
+    conversation = conversations[1]
+    if conversation == nil then
+      conversation = createConversation()
+    end
+    activeId = conversation.id
+  end
+  return conversation
+end
+
+local function pushMessage(conversation, entry)
+  entry.id = nextMessageId
+  nextMessageId = nextMessageId + 1
+  table.insert(conversation.messages, entry)
+  while #conversation.messages > MAX_KEPT do
+    table.remove(conversation.messages, 1)
+  end
+  conversation.updated = os.time()
+  return entry
+end
+
 --==========================================================================
 -- Persistence
 --==========================================================================
 
-local function historyPath()
+local function statePath()
   local dir = stateDir()
   if dir == nil then
     return nil
   end
-  return dir .. "/history.json"
+  return dir .. "/conversations.json"
 end
 
-local function saveHistory()
-  local path = historyPath()
+local function saveState()
+  local path = statePath()
   if path == nil then
     return
   end
 
   local plain = {}
-  for _, message in ipairs(messages) do
-    table.insert(plain, { role = message.role, text = message.text, failed = message.failed == true })
+  for _, conversation in ipairs(conversations) do
+    local messages = {}
+    for _, message in ipairs(conversation.messages) do
+      table.insert(messages, { role = message.role, text = message.text, failed = message.failed == true })
+    end
+    table.insert(plain, {
+      id = conversation.id,
+      title = conversation.title,
+      session = conversation.session,
+      updated = conversation.updated,
+      messages = messages,
+    })
   end
 
-  local encoded = noctalia.json.encode({ session = sessionId, messages = plain })
+  local encoded = noctalia.json.encode({ active = activeId, next = nextConvId, conversations = plain })
   if encoded ~= nil then
     noctalia.writeFile(path, encoded)
   end
 end
 
-local function loadHistory()
-  local path = historyPath()
-  if path == nil or not noctalia.fileExists(path) then
+local function adoptConversation(raw)
+  if type(raw) ~= "table" then
     return
   end
 
-  local raw = noctalia.readFile(path)
-  if raw == nil then
-    return
+  local conversation = {
+    id = "c" .. tostring(nextConvId),
+    title = type(raw.title) == "string" and raw.title ~= "" and raw.title or nil,
+    session = type(raw.session) == "string" and raw.session ~= "" and raw.session or nil,
+    updated = type(raw.updated) == "number" and raw.updated or os.time(),
+    messages = {},
+  }
+  if type(raw.id) == "string" and raw.id ~= "" then
+    conversation.id = raw.id
   end
+  nextConvId = nextConvId + 1
 
-  local data = noctalia.json.decode(raw)
-  if type(data) ~= "table" then
-    return
-  end
-
-  if type(data.session) == "string" and data.session ~= "" then
-    sessionId = data.session
-  end
-
-  messages = {}
-  if type(data.messages) == "table" then
-    for _, message in ipairs(data.messages) do
+  if type(raw.messages) == "table" then
+    for _, message in ipairs(raw.messages) do
       if type(message) == "table" and type(message.text) == "string"
           and (message.role == "user" or message.role == "assistant") then
-        table.insert(messages, {
-          id = nextId,
+        table.insert(conversation.messages, {
+          id = nextMessageId,
           role = message.role,
           text = message.text,
           failed = message.failed == true,
         })
-        nextId = nextId + 1
+        nextMessageId = nextMessageId + 1
       end
     end
   end
+
+  table.insert(conversations, conversation)
 end
 
-local function pushMessage(entry)
-  entry.id = nextId
-  nextId = nextId + 1
-  table.insert(messages, entry)
-  while #messages > MAX_KEPT do
-    table.remove(messages, 1)
+local function loadState()
+  local dir = stateDir()
+  if dir == nil then
+    return
   end
-  return entry
+
+  local path = dir .. "/conversations.json"
+  if noctalia.fileExists(path) then
+    local raw = noctalia.readFile(path)
+    local data = raw ~= nil and noctalia.json.decode(raw) or nil
+    if type(data) == "table" then
+      if type(data.conversations) == "table" then
+        for _, conversation in ipairs(data.conversations) do
+          adoptConversation(conversation)
+        end
+      end
+      if type(data.next) == "number" and data.next > nextConvId then
+        nextConvId = math.floor(data.next)
+      end
+      if type(data.active) == "string" then
+        activeId = data.active
+      end
+    end
+  else
+    -- Single-conversation layout written by v1.0 of this plugin.
+    local legacy = dir .. "/history.json"
+    if noctalia.fileExists(legacy) then
+      local raw = noctalia.readFile(legacy)
+      local data = raw ~= nil and noctalia.json.decode(raw) or nil
+      if type(data) == "table" and type(data.messages) == "table" and #data.messages > 0 then
+        adoptConversation({ session = data.session, messages = data.messages, updated = os.time() })
+        noctalia.renameFile(legacy, legacy .. ".migrated")
+      end
+    end
+  end
+
+  sortConversations()
+  ensureActive()
 end
 
 --==========================================================================
@@ -214,9 +378,83 @@ local function emptyStateNode()
   })
 end
 
-local newChat -- defined with the actions below
+-- Defined with the actions further down.
+local newChat
 local submit
 local stopRun
+local switchTo
+local commitRename
+
+local function conversationRow(conversation)
+  if renamingId == conversation.id then
+    return ui.input({
+      key = "rename-" .. conversation.id,
+      value = titleOf(conversation),
+      controlSize = "sm",
+      focus = true,
+      onSubmit = function(value)
+        commitRename(conversation.id, value)
+      end,
+    })
+  end
+
+  local isActive = conversation.id == activeId
+  local label = titleOf(conversation)
+  if busy and runConvId == conversation.id then
+    label = "* " .. label
+  end
+
+  return ui.button({
+    key = "conv-" .. conversation.id,
+    text = truncate(label, MAX_TITLE),
+    contentAlign = "start",
+    controlSize = "sm",
+    variant = isActive and "secondary" or "ghost",
+    selected = isActive,
+    tooltip = string.format("%d messages - %s - right-click to rename or delete",
+      #conversation.messages, relativeTime(conversation.updated)),
+    onClick = function()
+      switchTo(conversation.id)
+    end,
+    onRightClick = function()
+      panel.openContextMenu({
+        items = {
+          { kind = "header", label = truncate(titleOf(conversation), MAX_TITLE) },
+          { id = "rename", label = "Rename" },
+          { kind = "separator" },
+          { id = "delete", label = "Delete" },
+        },
+        onActivate = "onConversationMenu",
+        context = conversation.id,
+      })
+    end,
+  })
+end
+
+local function sidebarNode()
+  local rows = {}
+  for _, conversation in ipairs(conversations) do
+    table.insert(rows, conversationRow(conversation))
+  end
+
+  return ui.column({ gap = 8, width = SIDEBAR_WIDTH }, {
+    ui.button({
+      text = "New chat",
+      glyph = "plus",
+      variant = "primary",
+      controlSize = "sm",
+      onClick = function()
+        newChat()
+      end,
+    }),
+    ui.label({
+      text = string.format("%d conversation%s", #conversations, #conversations == 1 and "" or "s"),
+      fontSize = 10,
+      color = "on_surface_variant/0.8",
+    }),
+    ui.scroll({ flexGrow = 1, gap = 2 }, rows),
+  })
+end
 
 local function headerNode()
   local model = conf("model", "default")
@@ -225,18 +463,29 @@ local function headerNode()
     subtitle = subtitle .. " - " .. conf("tools", "chat")
   end
 
+  local conversation = ensureActive()
+
   return ui.row({ gap = 8, align = "center" }, {
-    ui.glyph({ name = "sparkles", size = 16, color = "primary" }),
-    ui.column({ gap = 0 }, {
-      ui.label({ text = "Claude", fontSize = 15, fontWeight = "bold" }),
+    ui.button({
+      glyph = sidebarOpen and "layout-sidebar-left-collapse" or "menu-2",
+      variant = "ghost",
+      controlSize = "sm",
+      tooltip = sidebarOpen and "Hide conversations" or "Show conversations",
+      onClick = function()
+        sidebarOpen = not sidebarOpen
+        render()
+      end,
+    }),
+    ui.column({ gap = 0, flexGrow = 1 }, {
+      ui.label({ text = truncate(titleOf(conversation), 40), fontSize = 14, fontWeight = "bold" }),
       ui.label({ text = subtitle, fontSize = 10, color = "on_surface_variant" }),
     }),
-    ui.spacer({ flexGrow = 1 }),
     ui.button({
       glyph = "plus",
       variant = "ghost",
       controlSize = "sm",
       tooltip = "New conversation",
+      visible = not sidebarOpen,
       onClick = function()
         newChat()
       end,
@@ -295,19 +544,27 @@ local function composerNode()
   })
 end
 
-render = function()
-  lastRenderMs = noctalia.nowMs()
-  renderPending = false
+local function statusLine()
+  if busy and runConvId ~= nil and runConvId ~= activeId then
+    local other = conversationById(runConvId)
+    local name = other ~= nil and truncate(titleOf(other), MAX_TITLE) or "another conversation"
+    return "Answering in " .. name .. "..."
+  end
+  return status
+end
+
+local function chatColumnNode()
+  local conversation = ensureActive()
 
   local turns = {}
-  for _, message in ipairs(messages) do
+  for _, message in ipairs(conversation.messages) do
     table.insert(turns, turnNode(message))
   end
   if #turns == 0 then
     table.insert(turns, emptyStateNode())
   end
 
-  local root = {
+  local children = {
     headerNode(),
     ui.separator({}),
     ui.scroll({
@@ -318,23 +575,38 @@ render = function()
     }, turns),
   }
 
-  if status ~= nil then
-    table.insert(root, ui.row({ gap = 6, align = "center" }, {
+  local line = statusLine()
+  if line ~= nil then
+    table.insert(children, ui.row({ gap = 6, align = "center" }, {
       ui.glyph({ name = busy and "dots" or "info", size = 12, color = busy and "primary" or "on_surface_variant" }),
-      ui.label({ text = status, fontSize = 11, color = "on_surface_variant", flexGrow = 1 }),
+      ui.label({ text = line, fontSize = 11, color = "on_surface_variant", flexGrow = 1 }),
     }))
   end
 
-  table.insert(root, composerNode())
+  table.insert(children, composerNode())
 
-  panel.render(ui.column({ gap = 10, padding = 14, flexGrow = 1 }, root))
+  return ui.column({ gap = 10, flexGrow = 1 }, children)
+end
+
+render = function()
+  lastRenderMs = noctalia.nowMs()
+  renderPending = false
+
+  local root = {}
+  if sidebarOpen then
+    table.insert(root, sidebarNode())
+    table.insert(root, ui.separator({ orientation = "vertical" }))
+  end
+  table.insert(root, chatColumnNode())
+
+  panel.render(ui.row({ gap = 12, padding = 14, flexGrow = 1 }, root))
 end
 
 --==========================================================================
 -- Talking to the CLI
 --==========================================================================
 
-local function buildCommand(promptPath)
+local function buildCommand(promptPath, sessionId)
   local bin = conf("claude_bin", "claude")
   local workdir = noctalia.expandPath(conf("workdir", "~"))
   local args = " -p --output-format stream-json --include-partial-messages --verbose"
@@ -378,9 +650,10 @@ local function toolNameFrom(message)
   return nil
 end
 
-local function finishRun(assistant, event, promptPath)
+local function finishRun(conversation, assistant, event, promptPath)
   activeRun = 0
   busy = false
+  runConvId = nil
   status = nil
   assistant.streaming = false
   current = nil
@@ -400,16 +673,18 @@ local function finishRun(assistant, event, promptPath)
     assistant.text = event.result
   end
 
+  conversation.updated = os.time()
+  sortConversations()
   scrollRev = scrollRev + 1
   render()
-  saveHistory()
+  saveState()
 
   if promptPath ~= nil then
     noctalia.removeFile(promptPath)
   end
 end
 
-local function handleLine(run, assistant, promptPath, line)
+local function handleLine(run, conversation, assistant, promptPath, line)
   if run ~= activeRun or type(line) ~= "string" or line == "" then
     return
   end
@@ -421,8 +696,10 @@ local function handleLine(run, assistant, promptPath, line)
     return
   end
 
+  -- Every event carries the session id; keeping it on the conversation is
+  -- what lets the next turn --resume this exact thread.
   if type(event.session_id) == "string" and event.session_id ~= "" then
-    sessionId = event.session_id
+    conversation.session = event.session_id
   end
 
   if event.type == "stream_event" and type(event.event) == "table" then
@@ -442,7 +719,7 @@ local function handleLine(run, assistant, promptPath, line)
       render()
     end
   elseif event.type == "result" then
-    finishRun(assistant, event, promptPath)
+    finishRun(conversation, assistant, event, promptPath)
   end
 end
 
@@ -467,6 +744,7 @@ submit = function(text)
     return
   end
 
+  local conversation = ensureActive()
   runSeq = runSeq + 1
   local run = runSeq
   local promptPath = dir .. "/prompt-" .. tostring(run) .. ".txt"
@@ -480,26 +758,32 @@ submit = function(text)
 
   activeRun = run
   busy = true
+  runConvId = conversation.id
   status = "Claude is thinking..."
   draft = ""
   composerRev = composerRev + 1
+  renamingId = nil
   lastActivityMs = noctalia.nowMs()
   publishBusy()
 
-  pushMessage({ role = "user", text = body })
-  local assistant = pushMessage({ role = "assistant", text = "", streaming = true })
+  pushMessage(conversation, { role = "user", text = body })
+  local assistant = pushMessage(conversation, { role = "assistant", text = "", streaming = true })
   current = assistant
+  if conversation.title == nil then
+    conversation.title = truncate(firstLine(body), MAX_TITLE)
+  end
+  sortConversations()
   scrollRev = scrollRev + 1
   render()
 
-  local started = noctalia.runStream(buildCommand(promptPath), function(line)
-    handleLine(run, assistant, promptPath, line)
+  local started = noctalia.runStream(buildCommand(promptPath, conversation.session), function(line)
+    handleLine(run, conversation, assistant, promptPath, line)
   end)
 
   if not started then
     assistant.text = "Could not start `" .. conf("claude_bin", "claude") .. "`. Is it on PATH?"
     assistant.failed = true
-    finishRun(assistant, nil, promptPath)
+    finishRun(conversation, assistant, nil, promptPath)
   end
 end
 
@@ -509,6 +793,7 @@ stopRun = function()
   end
   activeRun = 0
   busy = false
+  runConvId = nil
   publishBusy()
   if current ~= nil then
     current.streaming = false
@@ -520,22 +805,97 @@ stopRun = function()
   end
   status = "Stopped. The claude process finishes on its own."
   render()
-  saveHistory()
+  saveState()
 end
 
 newChat = function()
-  if busy then
-    stopRun()
+  -- A pristine empty conversation is already a new chat; don't stack them up.
+  local conversation = active()
+  if conversation ~= nil and #conversation.messages == 0 and conversation.session == nil then
+    renamingId = nil
+    draft = ""
+    composerRev = composerRev + 1
+    render()
+    return
   end
-  messages = {}
-  sessionId = nil
-  current = nil
+
+  createConversation()
+  renamingId = nil
   status = nil
   draft = ""
   composerRev = composerRev + 1
   scrollRev = scrollRev + 1
   render()
-  saveHistory()
+  saveState()
+end
+
+switchTo = function(id)
+  if id == activeId then
+    return
+  end
+  if conversationById(id) == nil then
+    return
+  end
+  activeId = id
+  renamingId = nil
+  status = nil
+  draft = ""
+  composerRev = composerRev + 1
+  scrollRev = scrollRev + 1
+  render()
+  saveState()
+end
+
+commitRename = function(id, value)
+  local conversation = conversationById(id)
+  renamingId = nil
+  if conversation ~= nil then
+    local title = truncate(firstLine(value or ""), MAX_TITLE)
+    conversation.title = title ~= "" and title or nil
+    saveState()
+  end
+  render()
+end
+
+local function deleteConversation(id)
+  local index = nil
+  for position, conversation in ipairs(conversations) do
+    if conversation.id == id then
+      index = position
+      break
+    end
+  end
+  if index == nil then
+    return
+  end
+
+  if busy and runConvId == id then
+    stopRun()
+  end
+
+  table.remove(conversations, index)
+  if renamingId == id then
+    renamingId = nil
+  end
+  if activeId == id then
+    activeId = nil
+    draft = ""
+    composerRev = composerRev + 1
+  end
+  ensureActive()
+  scrollRev = scrollRev + 1
+  render()
+  saveState()
+end
+
+-- Context menus dispatch to a global callback by name.
+function onConversationMenu(action, conversationId)
+  if action == "rename" then
+    renamingId = conversationId
+    render()
+  elseif action == "delete" then
+    deleteConversation(conversationId)
+  end
 end
 
 --==========================================================================
@@ -544,9 +904,10 @@ end
 
 function onOpen(context)
   if not loaded then
-    loadHistory()
+    loadState()
     loaded = true
   end
+  ensureActive()
 
   -- A run that was still streaming when the panel closed, with nothing
   -- arriving since, is never going to finish -- clear it instead of
@@ -562,6 +923,7 @@ function onOpen(context)
     end
     activeRun = 0
     busy = false
+    runConvId = nil
     status = nil
     publishBusy()
   end
@@ -587,14 +949,16 @@ function update()
   end
   if now - lastActivityMs > STALL_MS then
     local assistant = current
-    if assistant ~= nil then
+    local conversation = runConvId ~= nil and conversationById(runConvId) or nil
+    if assistant ~= nil and conversation ~= nil then
       if assistant.text == "" then
         assistant.text = "No response from claude (timed out)."
         assistant.failed = true
       end
-      finishRun(assistant, nil, nil)
+      finishRun(conversation, assistant, nil, nil)
     else
       busy = false
+      runConvId = nil
       publishBusy()
       render()
     end
@@ -608,5 +972,7 @@ function onIpc(event, payload)
     newChat()
   elseif event == "stop" then
     stopRun()
+  elseif event == "switch" then
+    switchTo(payload)
   end
 end

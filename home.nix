@@ -70,6 +70,17 @@
     openssl
     bc
 
+    # PDF skill runtime (modules/claude/skills/pdf). The Python libraries it
+    # needs are resolved per-invocation by uv, so only the command-line tools
+    # have to exist in the profile.
+    poppler-utils # pdftotext, pdfimages, pdftoppm
+    qpdf
+    tesseract # OCR for scanned PDFs
+
+    # aks-troubleshooting skill: host-side DNS checks (dig, nslookup). az,
+    # kubectl and jq it also needs are already above.
+    dnsutils
+
     # dev
     lens
     kubectl

@@ -4,37 +4,23 @@
 { ... }:
 
 {
-  # No layouts declared yet, which means ../../modules/hyprland.nix emits no
-  # `monitor` entries and Hyprland auto-configures whatever it finds (preferred
-  # mode, auto position). Fill this in after the first boot, when the real
-  # output names are known:
+  # Xiaomi Mi Monitor (2560x1440, DP-3) on the left, Dell P2725HE (1920x1080,
+  # DP-2) on the right, both at their highest available refresh rate. Found
+  # via:
   #
   #   hyprctl monitors | grep -E '^Monitor|availableModes' | head
-  #
-  # then uncomment the shape below. `monitor-profile list` and the rofi picker
-  # (SUPER + SHIFT + M) pick these up automatically; `quickProfiles` is what
-  # gets SUPER + ALT + 1..n, and `defaultProfile` is the layout compiled into
-  # the config for a fresh install.
   my.hyprland = {
-    monitorProfiles = { };
+    defaultProfile = "desk";
+    quickProfiles = [ "desk" ];
 
-    # defaultProfile = "desk";
-    # quickProfiles = [ "desk" "solo" ];
-    # monitorProfiles = {
-    #   desk = {
-    #     description = "Both screens";
-    #     monitors = [
-    #       { output = "DP-1"; mode = "preferred"; position = "0x0"; scale = 1; }
-    #       { output = "HDMI-A-1"; mode = "preferred"; position = "auto"; scale = 1; }
-    #     ];
-    #   };
-    #
-    #   solo = {
-    #     description = "Main screen only";
-    #     monitors = [
-    #       { output = "DP-1"; mode = "preferred"; position = "0x0"; scale = 1; }
-    #     ];
-    #   };
-    # };
+    monitorProfiles = {
+      desk = {
+        description = "Xiaomi (left) + Dell (right)";
+        monitors = [
+          { output = "DP-3"; mode = "2560x1440@165.00Hz"; position = "0x0"; scale = 1; }
+          { output = "DP-2"; mode = "1920x1080@100.00Hz"; position = "2560x0"; scale = 1; }
+        ];
+      };
+    };
   };
 }

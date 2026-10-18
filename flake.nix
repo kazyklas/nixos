@@ -42,30 +42,43 @@
     ];
   };
 
-  outputs = inputs@{ self, nixpkgs, home-manager, nixvim, caelestia-shell, ... }: {
-    nixosConfigurations.nixos = nixpkgs.lib.nixosSystem {
-      specialArgs = { inherit inputs; };
-      modules = [
-	      ./hardware-configuration.nix
-	      ./configuration.nix
+  # Every host gets the shared layers (./configuration.nix + ./home.nix) plus
+  # its own hosts/<name>/ directory for hardware, hostname and whatever else is
+  # true of that machine alone. Adding a machine is: create hosts/<name>/ and
+  # add its name to the list in `nixosConfigurations` below.
+  outputs = inputs@{ self, nixpkgs, home-manager, nixvim, caelestia-shell, ... }:
+    let
+      mkHost = hostName: nixpkgs.lib.nixosSystem {
+        specialArgs = { inherit inputs hostName; };
+        modules = [
+          ./configuration.nix
+          ./hosts/${hostName}
 
-				# nixvim.homeModules.nixvim
-				# Home Manager module
-        home-manager.nixosModules.home-manager
-        {
-          home-manager.useGlobalPkgs = true;
-          home-manager.useUserPackages = true;
-          home-manager.extraSpecialArgs = { inherit inputs; };
-          home-manager.users.tklas = {
-            imports = [
-              ./home.nix
-              nixvim.homeModules.nixvim
-              caelestia-shell.homeManagerModules.default
-              inputs.spicetify-nix.homeManagerModules.spicetify
-            ];
-          };
-        }
-      ];
+          # Home Manager module
+          home-manager.nixosModules.home-manager
+          {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.extraSpecialArgs = { inherit inputs hostName; };
+            home-manager.users.tklas = {
+              imports = [
+                ./home.nix
+                ./hosts/${hostName}/home.nix
+                nixvim.homeModules.nixvim
+                caelestia-shell.homeManagerModules.default
+                inputs.spicetify-nix.homeManagerModules.spicetify
+              ];
+            };
+          }
+        ];
+      };
+    in
+    {
+      nixosConfigurations = nixpkgs.lib.genAttrs [ "laptop" "beast" ] mkHost // {
+        # The laptop's hostname is still `nixos`, so this alias keeps the bare
+        # `nixos-rebuild switch --flake ~/nixos` (which resolves the attribute
+        # from the hostname) and the old `#nixos` working.
+        nixos = self.nixosConfigurations.laptop;
+      };
     };
-  };
 }

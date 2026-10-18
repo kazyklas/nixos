@@ -16,11 +16,15 @@ from Nix, and Claude Code wired in deep enough that it has its own chat panel in
 
 ## What this is
 
-Everything about this machine — bootloader, kernel params, LUKS root, the window
+Everything about these machines — bootloader, kernel params, LUKS root, the window
 manager's keybinds, the Spotify theme, the Neovim LSP set, even the AI assistant's
-skills — lives in this repository as Nix expressions. A fresh laptop is one
-`nixos-rebuild switch` away from being *the* laptop; nothing is configured by hand,
+skills — lives in this repository as Nix expressions. A fresh machine is one
+`nixos-rebuild switch` away from being *the* machine; nothing is configured by hand,
 and nothing drifts.
+
+One flake describes every host: `laptop` and `beast` share `configuration.nix` and
+`home.nix` verbatim and differ only in their `hosts/<name>/` directory — see
+[Hosts](#hosts).
 
 It is a personal config, not a framework. But the interesting parts are stolen-from
 on purpose — see [Highlights](#highlights).
@@ -45,8 +49,10 @@ focusBinds = lib.concatMap (d: [
 
 ### 🖥️ Monitor profiles that switch without a rebuild
 
-Four named desk layouts (`work`, `home`, `solo`, `docked`) are declared once as plain
-attrsets. From them the module generates a `monitor-profile` shell application that
+Screens are per-machine data, so the layouts live in `hosts/<name>/home.nix` as
+plain attrsets under `my.hyprland.monitorProfiles` — four named desks on the laptop
+(`work`, `home`, `solo`, `docked`). From them the module generates a
+`monitor-profile` shell application that
 applies a layout at runtime through `hyprctl eval`, remembers the choice in
 `$XDG_STATE_HOME`, and restores it on the next login — so moving between desks is a
 keystroke, not a `switch`. Outputs a profile doesn't mention are explicitly disabled,
@@ -56,6 +62,11 @@ so no phantom screen ever holds a workspace hostage.
 SUPER + SHIFT + M        pick a profile with rofi
 SUPER + ALT + 1/2/3      work / home / solo
 ```
+
+`SUPER + ALT + n` is generated from the host's `quickProfiles` list, and a host that
+declares no profiles at all gets no tool, no binds and no `monitor` entries — it just
+lets Hyprland auto-configure whatever it finds, which is what a machine does before
+anyone has written its output names down.
 
 ### 💬 Claude, in the shell bar
 
@@ -109,11 +120,20 @@ saying exactly why it exists — so it can be deleted the day it stops being nee
 
 ```
 .
-├── flake.nix                     inputs, the nixosConfigurations.nixos output, Cachix for Noctalia
-├── configuration.nix             system: boot, kernel, network, audio, fonts, podman, libvirt, power
-├── hardware-configuration.nix    generated: LUKS root, Intel CPU, kvm-intel
-├── home.nix                      user: packages, zsh, git, fzf, kitty, spicetify, caelestia
+├── flake.nix                     inputs, the mkHost helper, one output per host, Cachix for Noctalia
+├── configuration.nix             SHARED system: boot, kernel, network, audio, fonts, podman, libvirt
+├── home.nix                      SHARED user: packages, zsh, git, fzf, kitty, spicetify, caelestia
+├── hosts/
+│   ├── laptop/
+│   │   ├── default.nix           hostname, stateVersion, pulls in modules/laptop.nix
+│   │   ├── hardware-configuration.nix   generated: LUKS root, Intel CPU, kvm-intel
+│   │   └── home.nix              the four monitor profiles
+│   └── beast/
+│       ├── default.nix           hostname, stateVersion, the NVIDIA block
+│       ├── hardware-configuration.nix   placeholder until generated on the machine
+│       └── home.nix              monitor profiles (empty until first boot)
 ├── modules/
+│   ├── laptop.nix                battery, lid, deep suspend, power-profile switching
 │   ├── hyprland.nix              compositor config in Lua + the monitor-profile tool
 │   ├── nixvim.nix                Neovim
 │   ├── claude-code.nix           ~/.claude generation
@@ -124,6 +144,58 @@ saying exactly why it exists — so it can be deleted the day it stops being nee
 └── pkgs/
     └── opencode-bin.nix          opencode from the upstream binary
 ```
+
+## Hosts
+
+| Host | Attribute | Hostname | What it is |
+|---|---|---|---|
+| laptop | `#laptop` (also `#nixos`) | `nixos` | Intel laptop, LUKS root, four desks |
+| beast | `#beast` | `beast` | desktop, NVIDIA — not installed yet |
+
+The rule for where a setting goes:
+
+- **true of every machine** → `configuration.nix` (system) or `home.nix` (user).
+  Packages, shell, editor, Claude Code skills, keybinds, theme: all shared, so both
+  machines feel the same.
+- **true of one machine** → `hosts/<name>/default.nix` (system) or
+  `hosts/<name>/home.nix` (user). Hostname, `stateVersion`, GPU, screens.
+- **true of a *kind* of machine** → a module in `modules/` that only those hosts
+  import, like [`modules/laptop.nix`](modules/laptop.nix) for the battery, the lid
+  and deep suspend.
+
+`hosts/laptop/` keeps `networking.hostName = "nixos"` on purpose — the flake
+attribute is what got renamed, not the machine, so Tailscale and SSH `known_hosts`
+never noticed. `nixosConfigurations.nixos` is kept as an alias of `laptop` so the
+bare `nixos-rebuild --flake ~/nixos` (which resolves the attribute from the
+hostname) still works.
+
+**Adding a third machine** is two steps: create `hosts/<name>/{default.nix,
+hardware-configuration.nix,home.nix}`, then add `"<name>"` to the list in
+`flake.nix`:
+
+```nix
+nixosConfigurations = nixpkgs.lib.genAttrs [ "laptop" "beast" ] mkHost // { … };
+```
+
+### Installing beast
+
+```sh
+# 1. in the installer: partition, encrypt, mount to /mnt, then
+nixos-generate-config --root /mnt
+
+# 2. put the generated hardware config in the repo (replacing the placeholder,
+#    whose `warnings` line reminds you on every build that it is still there)
+git clone <this repo> /mnt/home/tklas/nixos
+cp /mnt/etc/nixos/hardware-configuration.nix /mnt/home/tklas/nixos/hosts/beast/
+cd /mnt/home/tklas/nixos && git add hosts/beast/hardware-configuration.nix
+
+# 3. install
+nixos-install --flake /mnt/home/tklas/nixos#beast
+```
+
+After the first boot: uncomment the NVIDIA block in `hosts/beast/default.nix`, fill
+in `hosts/beast/home.nix` with the monitor layouts from `hyprctl monitors`, and
+`noctalia msg plugins enable tklas/claude_chat`.
 
 ## The desktop
 
@@ -159,23 +231,27 @@ and the usual AI CLIs (claude-code, opencode, gemini-cli).
 | `PRINT` | region screenshot (`+ SUPER` for the whole output) |
 | `SUPER + CTRL + L` | lock |
 
-Power management is automatic: udev rules flip `power-profiles-daemon` to *performance*
-on AC and *power-saver* on battery, and `nix.gc` prunes the store weekly.
+Power management is automatic on the laptop ([`modules/laptop.nix`](modules/laptop.nix)):
+udev rules flip `power-profiles-daemon` to *performance* on AC and *power-saver* on
+battery. `nix.gc` prunes the store weekly on every host.
 
 ## Using it
 
 > [!NOTE]
-> This config hardcodes the hostname `nixos` and the user `tklas`, and
-> `hardware-configuration.nix` describes one specific Intel laptop with an encrypted
-> root. Treat it as a reference to read and lift from rather than something to apply
-> to your own machine unchanged.
+> This config hardcodes the user `tklas`, and each `hosts/*/hardware-configuration.nix`
+> describes one specific machine. Treat it as a reference to read and lift from rather
+> than something to apply to your own machine unchanged.
 
 ```sh
 # Rebuild the system (system + home-manager in one go)
-sudo nixos-rebuild switch --flake /home/tklas/nixos#nixos
+sudo nixos-rebuild switch --flake /home/tklas/nixos#laptop
+sudo nixos-rebuild switch --flake /home/tklas/nixos#beast
 
 # Preview without activating
-nixos-rebuild build --flake /home/tklas/nixos#nixos
+nixos-rebuild build --flake /home/tklas/nixos#laptop
+
+# Build a host from the other host (same flake, same lock, so it matches)
+nixos-rebuild build --flake /home/tklas/nixos#beast
 
 # Update inputs
 nix flake update                    # everything

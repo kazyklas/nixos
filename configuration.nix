@@ -1,3 +1,6 @@
+# Shared system configuration: everything that is true of every machine in this
+# flake. Hardware, hostname, stateVersion and the rest of the machine-specific
+# facts live in hosts/<name>/ instead.
 { config, pkgs, inputs, ... }:
 
 {
@@ -26,12 +29,10 @@
 
   # Use latest kernel.
   boot.kernelPackages = pkgs.linuxPackages_latest;
-  boot.kernelParams = [ "mem_sleep_default=deep" ];
 
   # Enable networking
   networking.networkmanager.enable = true;
   networking.networkmanager.wifi.powersave = false;
-  networking.hostName = "nixos"; # Define your hostname.
 
   # Set your time zone.
   time.timeZone = "Europe/Prague";
@@ -153,32 +154,7 @@
   # Enable the OpenSSH daemon.
   services.openssh.enable = true;
   services.tailscale.enable = true;
-  services.power-profiles-daemon.enable = true;
-
-  # Auto-switch power profile based on AC adapter state
-  systemd.services.power-profile-ac = {
-    description = "Set performance profile on AC power";
-    script = "${pkgs.power-profiles-daemon}/bin/powerprofilesctl set performance";
-    serviceConfig.Type = "oneshot";
-  };
-
-  systemd.services.power-profile-battery = {
-    description = "Set power-saver profile on battery";
-    script = "${pkgs.power-profiles-daemon}/bin/powerprofilesctl set power-saver";
-    serviceConfig.Type = "oneshot";
-  };
-
-  services.udev.extraRules = ''
-    SUBSYSTEM=="power_supply", ATTR{online}=="1", TAG+="systemd", ENV{SYSTEMD_WANTS}="power-profile-ac.service"
-    SUBSYSTEM=="power_supply", ATTR{online}=="0", TAG+="systemd", ENV{SYSTEMD_WANTS}="power-profile-battery.service"
-  '';
-  services.upower.enable = true;
   services.printing.enable = true;
-  services.logind.settings.Login = {
-    HandleLidSwitch = "suspend";
-    HandleLidSwitchExternalPower = "suspend";
-    HandleLidSwitchDocked = "ignore";
-  };
   # Enable the X11 windowing system.
   services.xserver.enable = true;
   # Enable the GNOME Desktop Environment.
@@ -192,16 +168,6 @@
 
   virtualisation.libvirtd.enable = true;
   programs.virt-manager.enable = true;
-
-  #services.tlp = {
-  #  enable = true;
-  #  settings = {
-  #    # Battery charging threshold 80%
-  #    STOP_CHARGE_THRESH_BAT0 = 80;
-  #  };
-  #};
-
-  system.stateVersion = "25.11";
 
   nix.gc = {
     automatic = true;

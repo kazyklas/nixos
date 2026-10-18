@@ -32,8 +32,14 @@ home-manager `readDir`s the directory. Adding a skill is "make a folder with a
 2. **`git add` the new files.** This flake only evaluates git-tracked files, so
    an untracked skill directory is invisible both to `readDir` and to the
    build. This is the single most common reason a new skill "doesn't show up".
-3. `sudo nixos-rebuild switch --flake /home/tklas/nixos#nixos`, then restart the
-   Claude Code session so it re-reads the config directory.
+3. `sudo nixos-rebuild switch --flake /home/tklas/nixos#laptop`, then restart the
+   Claude Code session so it re-reads the config directory. (`#beast` is the
+   other host; `#nixos` is kept as an alias of `#laptop`.)
+
+The flake is multi-host: `configuration.nix`, `home.nix` and everything under
+`modules/` — this skill included — are shared by every machine, and only
+hardware and per-machine facts live in `hosts/<name>/`. So Claude Code
+configuration always belongs in the shared layer, never under `hosts/`.
 
 Verify with `/skills` (or `/agents`, `/help` for commands) in a fresh session,
 or by checking the symlink resolves: `ls -l ~/.claude/skills/`.

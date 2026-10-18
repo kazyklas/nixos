@@ -34,8 +34,8 @@
   # boot.kernelPackages = pkgs.linuxPackages;
 
   # ---------- local LLMs ----------
-  # The shared config declares services.ollama with enable = false, because the
-  # laptop has nothing to run it on. beast presumably does:
-  services.ollama.enable = true;
-  services.ollama.acceleration = "cuda";
+  # The shared config already enables services.ollama for every host (CPU by
+  # default). `acceleration` was removed from the ollama module upstream --
+  # the GPU-backed package is now selected directly:
+  services.ollama.package = pkgs.ollama-cuda;
 }

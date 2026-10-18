@@ -19,14 +19,14 @@
   # not at all. `open = true` is the open-kernel-module flavour, correct for
   # Turing (RTX 20xx) and newer; set it to false for anything older.
   #
-  # services.xserver.videoDrivers = [ "nvidia" ];
-  # hardware.nvidia = {
-  #   modesetting.enable = true;
-  #   open = true;
-  #   nvidiaSettings = true;
-  #   package = config.boot.kernelPackages.nvidiaPackages.stable;
-  #   powerManagement.enable = false; # desktop: no suspend/resume VRAM dance
-  # };
+  services.xserver.videoDrivers = [ "nvidia" ];
+  hardware.nvidia = {
+    modesetting.enable = true;
+    open = true;
+    nvidiaSettings = true;
+    package = config.boot.kernelPackages.nvidiaPackages.stable;
+    powerManagement.enable = false; # desktop: no suspend/resume VRAM dance
+  };
   #
   # The shared config already sets hardware.graphics.enable{,32Bit} (Steam) and
   # boot.kernelPackages = linuxPackages_latest. If the NVIDIA module lags the
@@ -36,6 +36,6 @@
   # ---------- local LLMs ----------
   # The shared config declares services.ollama with enable = false, because the
   # laptop has nothing to run it on. beast presumably does:
-  # services.ollama.enable = true;
-  # services.ollama.acceleration = "cuda";
+  services.ollama.enable = true;
+  services.ollama.acceleration = "cuda";
 }

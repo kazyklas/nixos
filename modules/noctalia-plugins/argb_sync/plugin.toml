@@ -1,0 +1,51 @@
+id           = "tklas/argb_sync"
+name         = "ARGB Sync"
+version      = "1.0.0"
+plugin_api   = 28
+author       = "tklas"
+license      = "MIT"
+icon         = "bulb"
+description  = "Sync motherboard/case ARGB lighting to Noctalia's wallpaper color palette, via OpenRGB."
+tags         = ["hardware", "rgb", "theme"]
+dependencies = ["argb-sync"]
+
+# Advanced-only: almost nobody needs these, same spirit as claude_bin in the
+# claude_chat plugin. On/off, mode, slot colors and device filters are all
+# edited live in the panel instead -- they are runtime state, not
+# install-time configuration.
+[[setting]]
+key       = "openrgb_host"
+type      = "string"
+label_key = "settings.openrgb_host.label"
+description_key = "settings.openrgb_host.description"
+default   = "127.0.0.1"
+advanced  = true
+
+[[setting]]
+key       = "openrgb_port"
+type      = "string"
+label_key = "settings.openrgb_port.label"
+description_key = "settings.openrgb_port.description"
+default   = "6742"
+advanced  = true
+
+[[setting]]
+key       = "argb_bin"
+type      = "string"
+label_key = "settings.argb_bin.label"
+description_key = "settings.argb_bin.description"
+default   = "argb-sync"
+advanced  = true
+
+[[panel]]
+id       = "panel"
+entry    = "panel.luau"
+width    = 520
+height   = 560
+placement = "floating"
+position = "center"
+dismiss_on_outside_click = true
+
+[[widget]]
+id    = "toggle"
+entry = "widget.luau"

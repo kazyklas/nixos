@@ -1,0 +1,10 @@
+{
+  "settings.openrgb_host.label": "OpenRGB server host",
+  "settings.openrgb_host.description": "Host the OpenRGB SDK server listens on. Leave as-is unless it runs on another machine.",
+
+  "settings.openrgb_port.label": "OpenRGB server port",
+  "settings.openrgb_port.description": "Port the OpenRGB SDK server listens on (services.hardware.openrgb default: 6742).",
+
+  "settings.argb_bin.label": "argb-sync executable",
+  "settings.argb_bin.description": "Command used to apply colors to OpenRGB. An absolute path works if it is not on Noctalia's PATH."
+}

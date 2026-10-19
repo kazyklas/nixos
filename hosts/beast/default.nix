@@ -38,4 +38,13 @@
   # default). `acceleration` was removed from the ollama module upstream --
   # the GPU-backed package is now selected directly:
   services.ollama.package = pkgs.ollama-cuda;
+
+  # ---------- ARGB lighting ----------
+  # beast's motherboard exposes an MSI Mystic Light USB ARGB controller
+  # (`lsusb`: 0db0:0076), one of OpenRGB's supported devices. This runs
+  # `openrgb --server` as a systemd service and installs the udev rules
+  # needed to reach it without root; `motherboard` is picked up automatically
+  # as "amd" from hardware.cpu.amd.updateMicrocode above. Driven by the
+  # argb_sync Noctalia plugin (hosts/beast/home.nix, modules/noctalia-plugins/argb_sync).
+  services.hardware.openrgb.enable = true;
 }

@@ -471,6 +471,9 @@ in
           (bind "${mainMod} + CTRL + L" (exec "noctalia msg session lock"))
           (bind "${mainMod} + W" (exec "noctalia ipc call wallpaper toggle"))
           (bind "${mainMod} + A" (exec "noctalia msg panel-toggle tklas/claude_chat:chat"))
+          # Harmless on hosts without the argb_sync plugin (beast only; see
+          # hosts/beast/home.nix) -- the IPC call just has nothing to open.
+          (bind "${mainMod} + G" (exec "noctalia msg panel-toggle tklas/argb_sync:panel"))
           (bind "${mainMod} + CTRL + R" (exec "hyprctl reload"))
 
           # screenshots

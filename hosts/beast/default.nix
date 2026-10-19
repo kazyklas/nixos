@@ -47,4 +47,14 @@
   # as "amd" from hardware.cpu.amd.updateMicrocode above. Driven by the
   # argb_sync Noctalia plugin (hosts/beast/home.nix, modules/noctalia-plugins/argb_sync).
   services.hardware.openrgb.enable = true;
+
+  # The fan ARGB headers (JARGB 1/2/3) enumerate with 0 LEDs on every fresh
+  # `openrgb --server` start until resized -- confirmed live: without this,
+  # color commands reach the GPU and keyboard (which report real LED lists)
+  # but silently have nothing to address on the motherboard's fan headers.
+  # `startupProfile` auto-loads the "beast" profile (saved once via
+  # `openrgb -sp beast` after resizing the zones by hand) so the resize
+  # survives service restarts and reboots without the plugin having to redo
+  # it on every run.
+  services.hardware.openrgb.startupProfile = "beast";
 }

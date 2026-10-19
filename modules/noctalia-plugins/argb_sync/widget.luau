@@ -220,9 +220,20 @@ local function refreshFromWallpaper(state)
     end
 
     local fresh = loadState() -- re-load: the panel may have edited it since we started
-    for _, key in ipairs({ "primary", "secondary", "tertiary" }) do
-      if type(palette[key]) == "string" and fresh.slots[key] ~= nil then
-        fresh.slots[key].hex = palette[key]
+    -- Material-You's primary/secondary/tertiary are deliberately desaturated
+    -- (tuned for UI text contrast, not lighting), so none of them look
+    -- "vivid" -- confirmed live: primary came back as a pale pastel while
+    -- source_color (the raw dominant color lifted straight from the
+    -- wallpaper, before any tone mapping) was a saturated, punchy color with
+    -- the same hue. Only the primary slot maps to it: secondary/tertiary stay
+    -- on the Material-You tokens as softer accent options.
+    for _, mapping in ipairs({
+      { slot = "primary", source = "source_color" },
+      { slot = "secondary", source = "secondary" },
+      { slot = "tertiary", source = "tertiary" },
+    }) do
+      if type(palette[mapping.source]) == "string" and fresh.slots[mapping.slot] ~= nil then
+        fresh.slots[mapping.slot].hex = palette[mapping.source]
       end
     end
     fresh.last_wallpaper = path

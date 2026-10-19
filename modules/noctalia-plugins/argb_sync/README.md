@@ -42,6 +42,21 @@ it's live state, not install-time config.
   `hosts/beast/default.nix`) -- runs `openrgb --server` and installs the udev rules
   needed to talk to the controller without root.
 - `openrgb` and `argb-sync` on `$PATH` (already added to `hosts/beast/home.nix`).
+- **The ARGB Sync bar widget has to actually be placed on a bar.** The background
+  worker lives entirely in `widget.luau`'s `update()` tick -- unlike `claude_chat`,
+  whose widget is cosmetic, here the widget *is* the engine. If it's never added to a
+  bar, it never runs, and nothing will sync no matter what `enabled` says in the panel.
+- **Fan ARGB headers may need a one-time zone resize.** On `beast`, `JARGB 1/2/3`
+  enumerate with 0 LEDs on every fresh `openrgb --server` start (confirmed live: color
+  commands reached the GPU and keyboard, which have real LED lists, but silently did
+  nothing to the fans). Fix once per board:
+  ```sh
+  openrgb --client 127.0.0.1:6742 --device 1 --zone 1 --size 30   # repeat per JARGB zone in use
+  openrgb --client 127.0.0.1:6742 -sp beast                       # save it
+  ```
+  then set `services.hardware.openrgb.startupProfile = "beast";` (already done in
+  `hosts/beast/default.nix`) so the resize survives a service restart/reboot instead of
+  needing to be redone by hand every time.
 
 ## Entries
 

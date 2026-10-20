@@ -155,6 +155,16 @@
   services.openssh.enable = true;
   services.tailscale.enable = true;
   services.printing.enable = true;
+  # Network printers announce themselves over mDNS/DNS-SD (AirPrint, IPP
+  # Everywhere). GNOME already pulls in Avahi, but not `nssmdns4`, so glibc
+  # cannot resolve the `.local` names those announcements carry -- only
+  # Avahi-aware clients can. Turning it on makes `BRN....local` resolve for
+  # CUPS, Chrome and curl alike; `openFirewall` opens UDP 5353 for the replies.
+  services.avahi = {
+    enable = true;
+    nssmdns4 = true;
+    openFirewall = true;
+  };
   # Enable the X11 windowing system.
   services.xserver.enable = true;
   # Enable the GNOME Desktop Environment.

@@ -123,6 +123,7 @@ saying exactly why it exists — so it can be deleted the day it stops being nee
 ├── flake.nix                     inputs, the mkHost helper, one output per host, Cachix for Noctalia
 ├── configuration.nix             SHARED system: boot, kernel, network, audio, fonts, podman, libvirt
 ├── home.nix                      SHARED user: packages, zsh, git, fzf, kitty, spicetify, caelestia
+├── .github/workflows/ci.yml      CI: evaluates every host's nixosConfiguration on each PR
 ├── hosts/
 │   ├── laptop/
 │   │   ├── default.nix           hostname, stateVersion, pulls in modules/laptop.nix
@@ -176,6 +177,18 @@ hardware-configuration.nix,home.nix}`, then add `"<name>"` to the list in
 ```nix
 nixosConfigurations = nixpkgs.lib.genAttrs [ "laptop" "beast" ] mkHost // { … };
 ```
+
+Add the same name to the `matrix.host` list in
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) so CI validates it too.
+
+## CI
+
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs on every pull
+request against `main`: one job per host, each evaluating
+`nixosConfigurations.<host>.config.system.build.toplevel` with Nix flakes, so
+a PR can't merge without proof that it still evaluates for both `laptop` and
+`beast`. It only evaluates (module options, asserts, the derivation graph),
+not builds packages — much faster, and enough to catch a broken module.
 
 ### Installing beast
 

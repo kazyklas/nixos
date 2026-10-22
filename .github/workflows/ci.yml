@@ -1,0 +1,31 @@
+name: CI
+
+# Proof, before a merge, that the flake still evaluates for every host. One
+# job per host in flake.nix's `nixosConfigurations` list — add a machine
+# there (per the flake's own comment) and add its name here too.
+#
+# This only evaluates each host's config (module options, asserts, the
+# derivation graph) — it does not build packages, which is far slower and
+# not needed to catch a broken module.
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  validate:
+    name: Validate ${{ matrix.host }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        host: [ laptop, beast ]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: DeterminateSystems/nix-installer-action@main
+
+      - name: Evaluate nixosConfigurations.${{ matrix.host }}
+        run: |
+          nix eval --accept-flake-config \
+            ".#nixosConfigurations.${{ matrix.host }}.config.system.build.toplevel.drvPath"

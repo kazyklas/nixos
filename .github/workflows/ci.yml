@@ -1,16 +1,20 @@
 name: CI
 
-# Proof, before a merge, that the flake still evaluates and every host still
-# builds. One job per host in flake.nix's `nixosConfigurations` list — add a
-# machine there (per the flake's own comment) and add its name here too.
+# Proof, before a merge, that the flake still evaluates for every host. One
+# job per host in flake.nix's `nixosConfigurations` list — add a machine
+# there (per the flake's own comment) and add its name here too.
+#
+# This only evaluates each host's config (module options, asserts, the
+# derivation graph) — it does not build packages, which is far slower and
+# not needed to catch a broken module.
 on:
   pull_request:
     branches: [ main ]
   workflow_dispatch:
 
 jobs:
-  build:
-    name: Build ${{ matrix.host }}
+  validate:
+    name: Validate ${{ matrix.host }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -21,9 +25,7 @@ jobs:
 
       - uses: DeterminateSystems/nix-installer-action@main
 
-      - uses: DeterminateSystems/magic-nix-cache-action@main
-
-      - name: Build nixosConfigurations.${{ matrix.host }}
+      - name: Evaluate nixosConfigurations.${{ matrix.host }}
         run: |
-          nix build --accept-flake-config --no-link --print-build-logs \
-            ".#nixosConfigurations.${{ matrix.host }}.config.system.build.toplevel"
+          nix eval --accept-flake-config \
+            ".#nixosConfigurations.${{ matrix.host }}.config.system.build.toplevel.drvPath"

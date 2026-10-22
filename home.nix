@@ -31,6 +31,9 @@
     libnotify
     swaynotificationcenter
     hyprcursor
+    # Future Cyan: the theme my.hyprland (modules/hyprland.nix) points
+    # HYPRCURSOR_THEME at. Not in nixpkgs, so it's vendored (pkgs/future-cyan-hyprcursor.nix).
+    (pkgs.callPackage ./pkgs/future-cyan-hyprcursor.nix { })
 
     # tools
     shell-gpt

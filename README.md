@@ -110,11 +110,15 @@ the Spotify build it patches.
 
 ### 🔌 Pragmatic escape hatches
 
-When upstream is broken, the fix is in-tree and documented:
+When upstream is broken or just missing from nixpkgs, the fix is in-tree and documented:
 [`pkgs/opencode-bin.nix`](pkgs/opencode-bin.nix) builds `opencode` from the upstream
 prebuilt release because the nixpkgs source build of 1.18.30 fails on every prompt.
-Likewise Zen Browser is wrapped from its AppImage. Each workaround carries a comment
-saying exactly why it exists — so it can be deleted the day it stops being needed.
+Likewise Zen Browser is wrapped from its AppImage, and
+[`pkgs/future-cyan-hyprcursor.nix`](pkgs/future-cyan-hyprcursor.nix) vendors the
+[Future Cyan](https://gitlab.com/Pummelfisch/future-cyan-hyprcursor) Hyprcursor theme
+from its GitLab repo, since it isn't packaged in nixpkgs either. Each workaround carries
+a comment saying exactly why it exists — so it can be deleted the day it stops being
+needed.
 
 ## Layout
 

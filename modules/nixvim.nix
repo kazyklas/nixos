@@ -3,6 +3,15 @@
 {
   programs.nixvim = {
     enable = true;
+
+    # Reuse home-manager's already-evaluated pkgs instead of letting nixvim
+    # build its own from its (followed) nixpkgs input. They're the same
+    # revision anyway (flake.nix pins inputs.nixvim.inputs.nixpkgs.follows =
+    # "nixpkgs"); this just avoids a second evaluation and the "default value
+    # has been affected by your flake input follows" warning that comes with
+    # it.
+    nixpkgs.useGlobalPackages = true;
+
     colorschemes.tokyonight = {
       enable = true;
       settings = {

@@ -1,0 +1,23 @@
+{
+  "skill_name": "metrics-design-review",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Review this daily monitoring design and propose fixes, no code changes. We export resource_failure only for failing resources, limited to 20 per publication, with labels env, resource_name, execution_id, artifact_id. artifact_id is a fresh UUID on every execution. The OTLP resource has service.instance.id = the publisher's ephemeral container UUID; our gateway promotes it to instance. We also export failures_total as a gauge including zero with env and execution_id. We have 1000 monitored resources in each of 3 environments and retain 30 days. SRE uses max_over_time(failures_total[2d]) > 0 for current failure state. Are these labels bounded by the cap, and what should we change?",
+      "expected_output": "Identify execution/artifact labels and resource instance churn. Explain publication cap versus retention growth, give a qualified estimate, and keep justified resource/environment dimensions. Preserve execution correlation in detailed records. Recognize snapshot gauge naming, recommend latest snapshot semantics for the always-emitted gauge, separate freshness, and explain sparse recovery cannot be fixed by changing a range function alone.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "We create a fresh worker deployment for each processing cycle, sometimes two cycles overlap. Eight workers export cpu_seconds_total and memory_utilization with labels service, deployment_id, worker_ip. I want low cardinality, so remove deployment_id and worker_ip and set service.instance.id to service. We do not have a central aggregator or assigned worker slots. Can you implement that design? First review whether it is correct and tell me the smallest sound approach; do not edit files.",
+      "expected_output": "Reject blind deletion because simultaneous independent workers/deployments would collide. Explain resource identity is also relevant. Require real aggregation/ownership, source-local reset-aware counter rates, appropriate gauge/weighted utilization aggregation, and overlap semantics, or retain sufficient source identity with a quantified budget. Do not invent coordinated slots or treat stripping labels as aggregation.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Make these health metrics readable for SRE: check_last_success and check_last_duration_seconds currently carry env, workspace_id, check_id, execution_id. We select scheduled checks by ID from system tables. The three monitored checks have unique names per workspace/environment and are rarely renamed; users prefer those names in Grafana over IDs. The same names exist in two workspaces. We push once a day; the success alert is max_over_time(check_last_success[2d]) == 0. Propose the final labels, migration and tests. Do not edit code.",
+      "expected_output": "Recommend env/workspace_id/check_name, remove execution_id, select checks internally by ID, and explain name uniqueness and rename tradeoff without insisting both name and ID are required. Keep duration as a value/unit. Fix latest success-state query and freshness, discuss old/new schema coexistence, and propose cross-execution stability and cross-resource/workspace separation checks.",
+      "files": []
+    }
+  ]
+}

@@ -9,6 +9,11 @@
     "beekeeper-studio-6.0.5"
   ];
 
+  # gemini-cli upstream flagged itself as superseded by Antigravity CLI
+  # (meta.problems.removal). We're keeping it installed as-is, so just mute
+  # the evaluation warning rather than dropping the package.
+  nixpkgs.config.problems.handlers.gemini-cli.removal = "ignore";
+
   environment.sessionVariables = {
 	  NIXOS_OZONE_WL = "1";
 	  MOZ_ENABLE_WAYLAND = "1";

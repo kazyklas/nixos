@@ -9,6 +9,11 @@
     "beekeeper-studio-6.0.5"
   ];
 
+  # gemini-cli (home.nix) is marked for removal upstream in favour of
+  # Antigravity CLI. We're keeping it for now, so silence the eval warning
+  # instead of dropping the package.
+  nixpkgs.config.problems.handlers.gemini-cli.removal = "ignore";
+
   environment.sessionVariables = {
 	  NIXOS_OZONE_WL = "1";
 	  MOZ_ENABLE_WAYLAND = "1";

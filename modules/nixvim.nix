@@ -1,8 +1,16 @@
-{ pkgs, ... }:
+{ pkgs, inputs, ... }:
 
 {
   programs.nixvim = {
     enable = true;
+
+    # Silences the "nixpkgs.source default value has been affected by your
+    # flake input `follows`" eval warning. flake.nix already sets
+    # inputs.nixvim.inputs.nixpkgs.follows = "nixpkgs", so this is the exact
+    # Nixpkgs nixvim would use anyway -- declaring it explicitly just raises
+    # its priority above nixvim's default so the warning stops firing.
+    nixpkgs.source = inputs.nixpkgs;
+
     colorschemes.tokyonight = {
       enable = true;
       settings = {

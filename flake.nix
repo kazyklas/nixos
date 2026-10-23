@@ -8,37 +8,39 @@
   # third-party repo. git+https:// resolves refs via plain `git ls-remote`
   # instead, which the sandbox's anonymous git proxy serves fine. Functionally
   # equivalent for public repos, just without GitHub's tarball shortcut.
+  # `shallow=1` keeps it that way: without it, git+https:// clones each repo's
+  # *entire* history (multiple GB for nixpkgs) instead of just the pinned rev.
   inputs = {
-    nixpkgs.url = "git+https://github.com/nixos/nixpkgs?ref=nixos-unstable";
+    nixpkgs.url = "git+https://github.com/nixos/nixpkgs?ref=nixos-unstable&shallow=1";
 
     noctalia = {
-      url = "git+https://github.com/noctalia-dev/noctalia-shell";
+      url = "git+https://github.com/noctalia-dev/noctalia-shell?shallow=1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
     home-manager = {
-      url = "git+https://github.com/nix-community/home-manager";
+      url = "git+https://github.com/nix-community/home-manager?shallow=1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
     nixvim = {
-      url = "git+https://github.com/nix-community/nixvim";
+      url = "git+https://github.com/nix-community/nixvim?shallow=1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
     caelestia-shell = {
-      url = "git+https://github.com/caelestia-dots/shell";
+      url = "git+https://github.com/caelestia-dots/shell?shallow=1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
     bookokrat = {
-      url = "git+https://github.com/bugzmanov/bookokrat";
+      url = "git+https://github.com/bugzmanov/bookokrat?shallow=1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
     # Pins its own nixpkgs on purpose: spicetify-cli must match the Spotify
     # version it patches, so don't make this follow ours.
-    spicetify-nix.url = "git+https://github.com/Gerg-L/spicetify-nix";
+    spicetify-nix.url = "git+https://github.com/Gerg-L/spicetify-nix?shallow=1";
 
   };
 

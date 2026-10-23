@@ -10,15 +10,16 @@
       "locked": {
         "lastModified": 1788695731,
         "narHash": "sha256-LtiRpkYuPEVOvwlUNooj1PRI4JMvVRZLjW0nJV161dk=",
-        "owner": "bugzmanov",
-        "repo": "bookokrat",
+        "ref": "refs/heads/main",
         "rev": "824cc7b175379ed314c12f3b8406edc32e2270cb",
-        "type": "github"
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/bugzmanov/bookokrat"
       },
       "original": {
-        "owner": "bugzmanov",
-        "repo": "bookokrat",
-        "type": "github"
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/bugzmanov/bookokrat"
       }
     },
     "caelestia-cli": {
@@ -57,15 +58,16 @@
       "locked": {
         "lastModified": 1789544377,
         "narHash": "sha256-lgUieUC/QTZIyrQNziqNc3SGeEHiBhEc+9RljdYSyh4=",
-        "owner": "caelestia-dots",
-        "repo": "shell",
+        "ref": "refs/heads/main",
         "rev": "9245237bd64b786edd4d15f793760ee32f04a96f",
-        "type": "github"
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/caelestia-dots/shell"
       },
       "original": {
-        "owner": "caelestia-dots",
-        "repo": "shell",
-        "type": "github"
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/caelestia-dots/shell"
       }
     },
     "flake-parts": {
@@ -116,15 +118,16 @@
       "locked": {
         "lastModified": 1789482455,
         "narHash": "sha256-pD3qVlQ4mUCFoTWrYtxecpSitQMsgJvJIN0FUIDZoEU=",
-        "owner": "nix-community",
-        "repo": "home-manager",
+        "ref": "refs/heads/master",
         "rev": "efa3ccb4c3cc90d832eab232976379058fa75aa3",
-        "type": "github"
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/nix-community/home-manager"
       },
       "original": {
-        "owner": "nix-community",
-        "repo": "home-manager",
-        "type": "github"
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/nix-community/home-manager"
       }
     },
     "m3shapes": {
@@ -153,16 +156,17 @@
       "locked": {
         "lastModified": 1789426278,
         "narHash": "sha256-GnotcvKtbTMnoVx6G4E7ZdUX6487Dky74dqq3pU7iRk=",
-        "owner": "nixos",
-        "repo": "nixpkgs",
+        "ref": "nixos-unstable",
         "rev": "efe6f071ede9d21c37462d2d6682d5e670099684",
-        "type": "github"
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/nixos/nixpkgs"
       },
       "original": {
-        "owner": "nixos",
         "ref": "nixos-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/nixos/nixpkgs"
       }
     },
     "nixpkgs_2": {
@@ -189,15 +193,16 @@
       "locked": {
         "lastModified": 1789344271,
         "narHash": "sha256-ezmg5oQSZWYdmomx6K1J+/6w7dRc7bquDMggc8eAE28=",
-        "owner": "nix-community",
-        "repo": "nixvim",
+        "ref": "refs/heads/main",
         "rev": "afcfb8c1dc075881bbaa6fa5745aebbdb179f8b8",
-        "type": "github"
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/nix-community/nixvim"
       },
       "original": {
-        "owner": "nix-community",
-        "repo": "nixvim",
-        "type": "github"
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/nix-community/nixvim"
       }
     },
     "noctalia": {
@@ -209,15 +214,16 @@
       "locked": {
         "lastModified": 1789564155,
         "narHash": "sha256-lguWt1Tp9URnh5lbD/OjKZeWRkFQZqxJP07dznmFXBE=",
-        "owner": "noctalia-dev",
-        "repo": "noctalia-shell",
+        "ref": "refs/heads/main",
         "rev": "9c936446a9cbee712d76891c0cb2d625a6bc5411",
-        "type": "github"
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/noctalia-dev/noctalia-shell"
       },
       "original": {
-        "owner": "noctalia-dev",
-        "repo": "noctalia-shell",
-        "type": "github"
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/noctalia-dev/noctalia-shell"
       }
     },
     "quickshell": {
@@ -260,15 +266,16 @@
       "locked": {
         "lastModified": 1791715302,
         "narHash": "sha256-AkjudSXIY6NAhJTc4it13lso/Ik7NCNwVJ3tJbKHtTo=",
-        "owner": "Gerg-L",
-        "repo": "spicetify-nix",
+        "ref": "refs/heads/master",
         "rev": "50246f67d72e042291e426823dd61567b796fea9",
-        "type": "github"
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/Gerg-L/spicetify-nix"
       },
       "original": {
-        "owner": "Gerg-L",
-        "repo": "spicetify-nix",
-        "type": "github"
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/Gerg-L/spicetify-nix"
       }
     },
     "systems": {

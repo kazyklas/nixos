@@ -139,6 +139,10 @@ and if they do, migrate the current contents of `~/.claude/settings.json` into
   falls back to a `--plugin-dir` wrapper that strict subcommands may reject.
 - **The upstream module is readable.** When an option's exact behaviour matters,
   read the source rather than guessing:
-  `nix flake prefetch --json github:nix-community/home-manager/$(jq -r '.nodes["home-manager"].locked.rev' flake.lock) | jq -r .storePath`
+  `nix flake prefetch --json "git+https://github.com/nix-community/home-manager?rev=$(jq -r '.nodes["home-manager"].locked.rev' flake.lock)" | jq -r .storePath`
   then look at `modules/programs/claude-code/{options,lib,default}.nix`.
   `lib.nix` is where the filename conventions in the table above are decided.
+  (Use `git+https://` rather than `github:` here too — the latter resolves
+  through the GitHub REST API, which 403s in Claude Code cloud sessions for
+  repos not attached to the session; see the note on flake inputs in
+  `flake.nix`.)

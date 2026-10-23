@@ -36,6 +36,12 @@
     caelestia-shell = {
       url = "git+https://github.com/caelestia-dots/shell?shallow=1";
       inputs.nixpkgs.follows = "nixpkgs";
+      # caelestia-cli moved to hatch-vcs dynamic versioning upstream, which
+      # can't determine a version from a tarball/non-git checkout and fails
+      # to build (SETUPTOOLS_SCM_PRETEND_VERSION doesn't rescue it under
+      # structuredAttrs). Pin to the last rev that still built successfully
+      # until upstream fixes this.
+      inputs.caelestia-cli.url = "git+https://github.com/caelestia-dots/cli?rev=6b84ee5090ec50f36aa1a53990d57ab0013925a0";
     };
 
     bookokrat = {

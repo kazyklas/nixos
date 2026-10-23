@@ -114,7 +114,17 @@
     opencode-desktop
     obsidian
     vlc
-    inputs.bookokrat.packages.${pkgs.stdenv.hostPlatform.system}.default
+    # bookokrat's SVG snapshot tests are pixel-exact against font rendering;
+    # a few more started failing after the nixpkgs bump (font/freetype
+    # rendering drift), joining the ones upstream already skips for the same
+    # flakiness reason. Skip those too rather than fail the whole build.
+    (inputs.bookokrat.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs (old: {
+      checkFlags = (old.checkFlags or [ ]) ++ [
+        "--skip=test_content_view_svg"
+        "--skip=test_keybinding_errors_popup_svg"
+        "--skip=test_toc_back_to_books_list_svg"
+      ];
+    }))
     # claude-code: installed by programs.claude-code (modules/claude-code.nix)
     gemini-cli
     ani-cli
@@ -122,7 +132,7 @@
     transmission_4
     teams-for-linux
     beekeeper-studio
-    gimp2
+    gimp
   ];
 
   programs.git = {

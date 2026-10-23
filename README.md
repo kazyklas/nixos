@@ -143,6 +143,7 @@ needed.
 │   ├── nixvim.nix                Neovim
 │   ├── claude-code.nix           ~/.claude generation
 │   ├── claude/skills/            one dir per Claude Code skill, auto-discovered
+│   ├── hermes-agent.nix          Hermes Agent CLI + desktop app (programs.hermes-agent)
 │   ├── noctalia-claude-chat.nix  symlinks the plugin into the shell's plugin dir
 │   └── noctalia-plugins/
 │       └── claude_chat/          the Claude chat panel (Luau)
@@ -230,7 +231,7 @@ in `hosts/beast/home.nix` with the monitor layouts from `hyprctl monitors`, and
 Also along for the ride: Kubernetes tooling (kubectl, k9s, helm, lens, argocd, kubeseal),
 IaC (opentofu, tflint, terraform-docs, checkov), cloud CLIs (aws, az, saml2aws, databricks),
 containers via **podman** with Docker compat, **libvirt** + virt-manager, Tailscale, Steam,
-and the usual AI CLIs (claude-code, opencode, gemini-cli).
+and the usual AI CLIs (claude-code, opencode, gemini-cli, [hermes-agent](https://hermes-agent.nousresearch.com/)).
 
 ### Keys worth knowing
 
@@ -293,4 +294,5 @@ noctalia msg plugins enable tklas/claude_chat
 [caelestia-shell](https://github.com/caelestia-dots/shell) ·
 [spicetify-nix](https://github.com/Gerg-L/spicetify-nix) ·
 [bookokrat](https://github.com/bugzmanov/bookokrat) ·
+[hermes-agent](https://github.com/NousResearch/hermes-agent) ·
 animation curves from [HyDE](https://github.com/HyDE-Project/HyDE)

@@ -53,6 +53,38 @@
     # version it patches, so don't make this follow ours.
     spicetify-nix.url = "git+https://github.com/Gerg-L/spicetify-nix?shallow=1";
 
+    # Hermes Agent (https://hermes-agent.nousresearch.com/), issue #12. Ships
+    # its own Home Manager module (modules/hermes-agent.nix wires it up); Nix
+    # support is upstream-labelled Tier 2 / best-effort, so pin it like the
+    # other third-party flakes and bump deliberately via `nix flake update`.
+    hermes-agent = {
+      url = "git+https://github.com/NousResearch/hermes-agent?shallow=1";
+      inputs.nixpkgs.follows = "nixpkgs";
+      # hermes-agent's own flake.nix pins these five via the github: fetcher,
+      # which -- per the comment at the top of this file -- 403s in Claude
+      # Code's cloud sandbox for a repo not explicitly attached to the
+      # session. Override each to git+https too, so a `nix flake update` run
+      # from a cloud session (this repo's lockfile bumps come from one) does
+      # not need every one of hermes-agent's own dependencies attached.
+      #
+      # Pinned to the exact revisions hermes-agent's own flake.lock already
+      # resolved (rather than left floating) -- these are uv2nix/pyproject-nix
+      # forks that must stay in lock-step with each other and with
+      # hermes-agent's pyproject.toml; floating them independently risks a
+      # version mismatch the upstream flake.lock was written to avoid. Bump
+      # these revisions by hand (from hermes-agent's own flake.lock) when
+      # `nix flake update hermes-agent` pulls a newer hermes-agent revision.
+      inputs.flake-parts.url = "git+https://github.com/hercules-ci/flake-parts?rev=17c9d6cdfc60c64f4ee8d306f9bc0b4ccb51481e";
+      inputs.pyproject-nix.url = "git+https://github.com/pyproject-nix/pyproject.nix?rev=e3b599ca2e7fcf93d4edf65d7f19bbf6491724f3";
+      inputs.uv2nix.url = "git+https://github.com/pyproject-nix/uv2nix?rev=7aba73a3d85454f1118f8cf9de97979b4d26bcac";
+      inputs.pyproject-build-systems.url = "git+https://github.com/pyproject-nix/build-system-pkgs?rev=62c0d86027edb1c4f39a5facc09876348144f7c9";
+      inputs.npm-lockfile-fix.url = "git+https://github.com/jeslie0/npm-lockfile-fix?rev=c6093acb0c0548e0f9b8b3d82918823721930fe8";
+      # Only used by hermes-agent's own checks (evaluating its Home Manager
+      # module against the real module system); follow ours instead of
+      # fetching a second copy.
+      inputs.home-manager.follows = "home-manager";
+    };
+
   };
 
   nixConfig = {
@@ -87,6 +119,7 @@
                 nixvim.homeModules.nixvim
                 caelestia-shell.homeManagerModules.default
                 inputs.spicetify-nix.homeManagerModules.spicetify
+                inputs.hermes-agent.homeManagerModules.default
               ];
             };
           }

@@ -1,6 +1,13 @@
 {
   description = "NixOS configuration with Noctalia";
 
+  # Flake inputs use the git+https:// fetcher rather than github: on purpose:
+  # github: resolves refs via the GitHub REST API (api.github.com), which
+  # Claude Code's cloud sandbox only authenticates for repos explicitly
+  # attached to the session, so `nix flake update` 403s there for any
+  # third-party repo. git+https:// resolves refs via plain `git ls-remote`
+  # instead, which the sandbox's anonymous git proxy serves fine. Functionally
+  # equivalent for public repos, just without GitHub's tarball shortcut.
   inputs = {
     # Flake inputs use git+https:// rather than the github: fetcher: the
     # latter resolves refs via the GitHub REST API, which Claude Code's cloud

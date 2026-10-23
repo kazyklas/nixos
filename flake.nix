@@ -55,7 +55,10 @@
 
     hermes-agent = {
       url = "git+https://github.com/NousResearch/hermes-agent?shallow=1";
-      inputs.nixpkgs.follows = "nixpkgs";
+      # Deliberately NOT following our nixpkgs: hermes autoPatchelfs the
+      # prebuilt upstream node binary, and patchelf 0.19 (our nixpkgs)
+      # overlaps its RW/R segments so node segfaults in ld.so. Using its
+      # own locked nixpkgs gets the derivation upstream actually tests.
       # hermes-agent's own flake.nix pulls flake-parts via the github:
       # fetcher, which 403s in Claude Code's cloud sandbox for the same
       # reason explained at the top of this file -- override it to

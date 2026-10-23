@@ -144,7 +144,7 @@ needed.
 │   ├── claude-code.nix           ~/.claude generation
 │   ├── claude/skills/            one dir per Claude Code skill, auto-discovered
 │   ├── noctalia-claude-chat.nix  symlinks the plugin into the shell's plugin dir
-│   ├── hermes-agent.nix          programs.hermes-agent (Hermes Agent CLI)
+│   ├── hermes-agent.nix          programs.hermes-agent (Hermes Agent CLI + desktop)
 │   └── noctalia-plugins/
 │       └── claude_chat/          the Claude chat panel (Luau)
 └── pkgs/

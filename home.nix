@@ -122,7 +122,7 @@
     transmission_4
     teams-for-linux
     beekeeper-studio
-    gimp2
+    gimp
   ];
 
   programs.git = {

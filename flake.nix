@@ -1,37 +1,44 @@
 {
   description = "NixOS configuration with Noctalia";
 
+  # Flake inputs use the git+https:// fetcher rather than github: on purpose:
+  # github: resolves refs via the GitHub REST API (api.github.com), which
+  # Claude Code's cloud sandbox only authenticates for repos explicitly
+  # attached to the session, so `nix flake update` 403s there for any
+  # third-party repo. git+https:// resolves refs via plain `git ls-remote`
+  # instead, which the sandbox's anonymous git proxy serves fine. Functionally
+  # equivalent for public repos, just without GitHub's tarball shortcut.
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs.url = "git+https://github.com/nixos/nixpkgs?ref=nixos-unstable";
 
     noctalia = {
-      url = "github:noctalia-dev/noctalia-shell";
+      url = "git+https://github.com/noctalia-dev/noctalia-shell";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
     home-manager = {
-      url = "github:nix-community/home-manager";
+      url = "git+https://github.com/nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
     nixvim = {
-      url = "github:nix-community/nixvim";
+      url = "git+https://github.com/nix-community/nixvim";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
     caelestia-shell = {
-      url = "github:caelestia-dots/shell";
+      url = "git+https://github.com/caelestia-dots/shell";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
     bookokrat = {
-      url = "github:bugzmanov/bookokrat";
+      url = "git+https://github.com/bugzmanov/bookokrat";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
     # Pins its own nixpkgs on purpose: spicetify-cli must match the Spotify
     # version it patches, so don't make this follow ours.
-    spicetify-nix.url = "github:Gerg-L/spicetify-nix";
+    spicetify-nix.url = "git+https://github.com/Gerg-L/spicetify-nix";
 
   };
 

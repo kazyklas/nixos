@@ -144,6 +144,7 @@ needed.
 │   ├── claude-code.nix           ~/.claude generation
 │   ├── claude/skills/            one dir per Claude Code skill, auto-discovered
 │   ├── noctalia-claude-chat.nix  symlinks the plugin into the shell's plugin dir
+│   ├── hermes-agent.nix          programs.hermes-agent (Hermes Agent CLI)
 │   └── noctalia-plugins/
 │       └── claude_chat/          the Claude chat panel (Luau)
 └── pkgs/
@@ -230,7 +231,7 @@ in `hosts/beast/home.nix` with the monitor layouts from `hyprctl monitors`, and
 Also along for the ride: Kubernetes tooling (kubectl, k9s, helm, lens, argocd, kubeseal),
 IaC (opentofu, tflint, terraform-docs, checkov), cloud CLIs (aws, az, saml2aws, databricks),
 containers via **podman** with Docker compat, **libvirt** + virt-manager, Tailscale, Steam,
-and the usual AI CLIs (claude-code, opencode, gemini-cli).
+and the usual AI CLIs (claude-code, opencode, gemini-cli, hermes-agent).
 
 ### Keys worth knowing
 

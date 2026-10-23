@@ -7,6 +7,7 @@
     ./modules/hyprland.nix
     ./modules/noctalia-claude-chat.nix
     ./modules/claude-code.nix
+    ./modules/hermes-agent.nix
   ];
 
   home.username = "tklas";

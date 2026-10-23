@@ -53,6 +53,16 @@
     # version it patches, so don't make this follow ours.
     spicetify-nix.url = "git+https://github.com/Gerg-L/spicetify-nix?shallow=1";
 
+    hermes-agent = {
+      url = "git+https://github.com/NousResearch/hermes-agent?shallow=1";
+      inputs.nixpkgs.follows = "nixpkgs";
+      # hermes-agent's own flake.nix pulls flake-parts via the github:
+      # fetcher, which 403s in Claude Code's cloud sandbox for the same
+      # reason explained at the top of this file -- override it to
+      # git+https:// too.
+      inputs.flake-parts.url = "git+https://github.com/hercules-ci/flake-parts?shallow=1";
+    };
+
   };
 
   nixConfig = {
@@ -87,6 +97,7 @@
                 nixvim.homeModules.nixvim
                 caelestia-shell.homeManagerModules.default
                 inputs.spicetify-nix.homeManagerModules.spicetify
+                inputs.hermes-agent.homeManagerModules.default
               ];
             };
           }

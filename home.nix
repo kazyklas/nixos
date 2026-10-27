@@ -165,6 +165,8 @@
       g = "g";
       ll = "g --tb-style=unicode --all --color always --header --git-repo-status";
       ls = "g --tb-style=unicode";
+      claude-personal = ''CLAUDE_CONFIG_DIR="$HOME/.claude-personal" claude'';
+      claude-work = ''CLAUDE_CONFIG_DIR="$HOME/.claude-work" claude'';
     };
 
     initContent = ''

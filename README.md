@@ -1,6 +1,6 @@
 <div align="center">
 
-# ❄️ nixos
+# 😊 nixos
 
 **One flake. A whole desktop.**
 

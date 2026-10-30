@@ -7,6 +7,9 @@
 #   Jellyfin ◀──scans── /data/media/{movies,tv} ◀─────────┘
 #   Bazarr adds subtitles next to the files Radarr/Sonarr manage.
 #
+#   Beszel (hub :8090) ◀──ssh── beszel-agent: host CPU/RAM/disk/network,
+#   per-container stats from the Podman socket, and the GPU when `nvidia`.
+#
 # Every app is a pinned container run by Podman through
 # virtualisation.oci-containers, which only writes the `podman run` into a
 # systemd unit (podman-<name>.service): that is what starts them at boot and
@@ -102,13 +105,25 @@ let
     bazarr = 6767;
     prowlarr = 9696;
     qbittorrent = 8080;
+    beszel = 8090;
   };
 
   publish = name: [ "${toString ports.${name}}:${toString ports.${name}}" ];
 
   # Everything on the media network; flaresolverr is only reached by Prowlarr
   # from inside it (http://flaresolverr:8191), so it publishes no port.
-  containerNames = lib.attrNames ports ++ [ "flaresolverr" ];
+  # Beszel runs on the host network instead (see its containers below).
+  containerNames = lib.attrNames (removeAttrs ports [ "beszel" ]) ++ [ "flaresolverr" ];
+
+  # The agent only listens on loopback, so it's reachable by the hub (also on
+  # the host network) and nothing else.
+  beszelAgentAddress = "127.0.0.1:45876";
+
+  # The hub signs in to its agent with this key. The hub would generate one on
+  # first start, but then the agent couldn't be given the public half without a
+  # manual copy from the web UI; generating it here (the hub loads an existing
+  # `id_ed25519` from its data dir) lets the agent read it from a file.
+  beszelKey = "${cfg.dataDir}/config/beszel/id_ed25519";
 in
 {
   options.services.media-server = {
@@ -177,6 +192,8 @@ in
       "config/bazarr"
       "config/prowlarr"
       "config/qbittorrent"
+      "config/beszel"
+      "config/beszel-agent"
     ];
 
     systemd.services = lib.mkMerge [
@@ -194,16 +211,36 @@ in
 
         # Merged with the oci-containers unit, so its own pre-start still runs first.
         podman-qbittorrent.serviceConfig.ExecStartPre = [ "${enforceQbittorrentSettings}" ];
+
+        beszel-key = {
+          description = "SSH key the Beszel hub uses to reach its agent";
+          serviceConfig = {
+            Type = "oneshot";
+            RemainAfterExit = true;
+          };
+          script = ''
+            [ -e ${beszelKey} ] || ${pkgs.openssh}/bin/ssh-keygen -q -t ed25519 -N "" -C beszel-hub -f ${beszelKey}
+            ${pkgs.openssh}/bin/ssh-keygen -y -f ${beszelKey} > ${beszelKey}.pub
+          '';
+        };
+
+        podman-beszel = {
+          requires = [ "beszel-key.service" ];
+          after = [ "beszel-key.service" ];
+        };
+
+        podman-beszel-agent = {
+          requires = [ "beszel-key.service" "podman.socket" ];
+          after = [ "beszel-key.service" "podman.socket" ];
+        };
       }
       # The GPU is passed in as a CDI device, whose spec the generator only
       # writes once udev has settled; starting before that fails with
       # "unresolvable CDI devices" until systemd gives up restarting.
-      (lib.mkIf cfg.nvidia {
-        podman-jellyfin = {
-          requires = [ "nvidia-container-toolkit-cdi-generator.service" ];
-          after = [ "nvidia-container-toolkit-cdi-generator.service" ];
-        };
-      })
+      (lib.mkIf cfg.nvidia (lib.genAttrs [ "podman-jellyfin" "podman-beszel-agent" ] (_: {
+        requires = [ "nvidia-container-toolkit-cdi-generator.service" ];
+        after = [ "nvidia-container-toolkit-cdi-generator.service" ];
+      })))
       (lib.genAttrs (map (n: "podman-${n}") containerNames) (_: {
         requires = [ "podman-network-media.service" ];
         after = [ "podman-network-media.service" ];
@@ -276,6 +313,43 @@ in
         volumes = [ (configMount "qbittorrent") dataMount ];
         ports = publish "qbittorrent";
         networks = [ network ];
+      };
+
+      # Web UI; the first visit creates the admin account.
+      beszel = {
+        image = "docker.io/henrygd/beszel:0.21.1";
+        environment = { TZ = linuxserverEnv.TZ; };
+        volumes = [ "${cfg.dataDir}/config/beszel:/beszel_data" ];
+        extraOptions = [ "--network=host" ];
+      };
+
+      # On the host network so it sees the host's interfaces, not a
+      # container's. Disk usage is the root filesystem's, which /srv/media is
+      # on. The GPU is read through NVML (libnvidia-ml.so.1, which the CDI
+      # device brings in from the host driver), not nvidia-smi: nixpkgs'
+      # patchelf leaves that binary with overlapping LOAD segments, so it
+      # segfaults in the loader before main, on the host too. The -nvidia
+      # image is glibc-based, which the driver library needs.
+      beszel-agent = {
+        image =
+          if cfg.nvidia
+          then "docker.io/henrygd/beszel-agent-nvidia:0.21.1"
+          else "docker.io/henrygd/beszel-agent:0.21.1";
+        environment = {
+          LISTEN = beszelAgentAddress;
+          KEY_FILE = "/hub_key.pub";
+        } // lib.optionalAttrs cfg.nvidia { GPU_COLLECTOR = "nvml"; };
+        volumes = [
+          "${beszelKey}.pub:/hub_key.pub:ro"
+          "${cfg.dataDir}/config/beszel-agent:/var/lib/beszel-agent"
+          # Podman's Docker-compatible API, for the per-container stats.
+          "/run/podman/podman.sock:/var/run/docker.sock:ro"
+        ];
+        # No disks are passed in, so Beszel's S.M.A.R.T. "Health" panel stays
+        # empty: smartctl would need them plus SYS_ADMIN, too much for a
+        # monitoring agent.
+        devices = lib.optional cfg.nvidia "nvidia.com/gpu=all";
+        extraOptions = [ "--network=host" ];
       };
     };
 

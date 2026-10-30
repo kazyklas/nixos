@@ -57,4 +57,15 @@
   # survives service restarts and reboots without the plugin having to redo
   # it on every run.
   services.hardware.openrgb.startupProfile = "beast";
+
+  # ---------- media server ----------
+  # Jellyfin + Seerr + Radarr/Sonarr/Bazarr/Prowlarr + qBittorrent in Podman
+  # (modules/media-server.nix). Library and app state live under /srv/media.
+  services.media-server = {
+    enable = true;
+    nvidia = true; # Jellyfin hardware transcoding on the RTX card
+    # Upload only while downloading (torrents still stop at 100%); peers
+    # throttle anyone who doesn't upload, so a cap this high keeps downloads fast.
+    qbittorrent.uploadLimitKiB = 6144; # 6 MiB/s
+  };
 }

@@ -86,6 +86,8 @@
         modules = [
           ./configuration.nix
           ./hosts/${hostName}
+          # Opt-in per host via services.media-server.enable (beast only).
+          self.nixosModules.media-server
 
           # Home Manager module
           home-manager.nixosModules.home-manager
@@ -108,6 +110,11 @@
       };
     in
     {
+      # Reusable outside this flake too: any NixOS flake can import
+      # `inputs.<this>.nixosModules.media-server` and set
+      # `services.media-server.enable = true;`.
+      nixosModules.media-server = ./modules/media-server.nix;
+
       nixosConfigurations = nixpkgs.lib.genAttrs [ "laptop" "beast" ] mkHost // {
         # The laptop's hostname is still `nixos`, so this alias keeps the bare
         # `nixos-rebuild switch --flake ~/nixos` (which resolves the attribute

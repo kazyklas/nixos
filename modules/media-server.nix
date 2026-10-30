@@ -195,6 +195,15 @@ in
         # Merged with the oci-containers unit, so its own pre-start still runs first.
         podman-qbittorrent.serviceConfig.ExecStartPre = [ "${enforceQbittorrentSettings}" ];
       }
+      # The GPU is passed in as a CDI device, whose spec the generator only
+      # writes once udev has settled; starting before that fails with
+      # "unresolvable CDI devices" until systemd gives up restarting.
+      (lib.mkIf cfg.nvidia {
+        podman-jellyfin = {
+          requires = [ "nvidia-container-toolkit-cdi-generator.service" ];
+          after = [ "nvidia-container-toolkit-cdi-generator.service" ];
+        };
+      })
       (lib.genAttrs (map (n: "podman-${n}") containerNames) (_: {
         requires = [ "podman-network-media.service" ];
         after = [ "podman-network-media.service" ];

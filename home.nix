@@ -61,6 +61,7 @@
     awscli2
     saml2aws
     gh
+    glab
     ripgrep
     kubernetes-helm
     k9s

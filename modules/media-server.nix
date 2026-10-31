@@ -6,6 +6,8 @@
 #                                                         │ (hardlink/move)
 #   Jellyfin ◀──scans── /data/media/{movies,tv} ◀─────────┘
 #   Bazarr adds subtitles next to the files Radarr/Sonarr manage.
+#   Cleanuparr removes torrents that stall in qBittorrent, blocklists them in
+#   Radarr/Sonarr and has them search for another release.
 #
 #   Beszel (hub :8090) ◀──ssh── beszel-agent: host CPU/RAM/disk/network,
 #   per-container stats from the Podman socket, and the GPU when `nvidia`.
@@ -105,6 +107,7 @@ let
     bazarr = 6767;
     prowlarr = 9696;
     qbittorrent = 8080;
+    cleanuparr = 11011;
     beszel = 8090;
   };
 
@@ -127,7 +130,7 @@ let
 in
 {
   options.services.media-server = {
-    enable = lib.mkEnableOption "the Jellyfin/Seerr/*arr/qBittorrent media stack";
+    enable = lib.mkEnableOption "the Jellyfin/Seerr/*arr/qBittorrent/Cleanuparr media stack";
 
     dataDir = lib.mkOption {
       type = lib.types.path;
@@ -192,6 +195,7 @@ in
       "config/bazarr"
       "config/prowlarr"
       "config/qbittorrent"
+      "config/cleanuparr"
       "config/beszel"
       "config/beszel-agent"
     ];
@@ -312,6 +316,17 @@ in
         environment = linuxserverEnv // { WEBUI_PORT = toString ports.qbittorrent; };
         volumes = [ (configMount "qbittorrent") dataMount ];
         ports = publish "qbittorrent";
+        networks = [ network ];
+      };
+
+      # Stalled-download cleanup. Its settings (the qBittorrent/Radarr/Sonarr
+      # connections and the stall rules) are made in its web UI and kept
+      # under its /config, like the other apps' API keys.
+      cleanuparr = {
+        image = "ghcr.io/cleanuparr/cleanuparr:2.10.12";
+        environment = linuxserverEnv // { PORT = toString ports.cleanuparr; };
+        volumes = [ (configMount "cleanuparr") ];
+        ports = publish "cleanuparr";
         networks = [ network ];
       };
 
